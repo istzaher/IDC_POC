@@ -8,16 +8,21 @@ import { AlertTriangle, CheckCircle, XCircle, Lightbulb, Search, Bot } from 'luc
 import toast from 'react-hot-toast'
 
 export function MaterialEntryForm() {
-  const [formData, setFormData] = useState<Partial<Material>>({
-    materialCode: '',
-    description: '',
-    materialType: '',
-    plantCode: '',
-    vendorId: '',
-    manufacturerId: '',
-    unitOfMeasure: '',
-    category: '',
-    basePrice: undefined
+  const [formData, setFormData] = useState({
+    material: '',
+    baseUnitOfMeasure: 'EA',
+    materialType: 'ZDRL',
+    industrySector: 'O',
+    materialGroup: '43JDX',
+    oldMaterialNumber: '',
+    crossReferenceMaterial: '',
+    crossPlantMaterialStatus: '',
+    commonMaterialFlag: false,
+    batchManagement: 'No',
+    serializationLevel: 'Serialization within the stock material number',
+    approvedBatchRecordRequired: 'No',
+    division: '',
+    catalogEnabled: false
   })
 
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
@@ -28,7 +33,7 @@ export function MaterialEntryForm() {
   // Real-time analysis when form data changes
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      if (formData.description && formData.description.length > 3) {
+      if (formData.material && formData.material.length > 3) {
         setIsAnalyzing(true)
         try {
           const result = await aiService.analyzeEntry(formData)
@@ -44,10 +49,9 @@ export function MaterialEntryForm() {
     return () => clearTimeout(timeoutId)
   }, [formData])
 
-  const handleInputChange = (field: keyof Material, value: string | number) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     
-    // Clear error when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => {
         const newErrors = { ...prev }
@@ -58,30 +62,16 @@ export function MaterialEntryForm() {
   }
 
   const applySuggestion = (field: string, suggestion: string) => {
-    handleInputChange(field as keyof Material, suggestion)
+    handleInputChange(field, suggestion)
     setShowSuggestions(prev => ({ ...prev, [field]: false }))
     toast.success(`Applied AI suggestion for ${field}`)
   }
 
-  const validateRequiredFields = (): boolean => {
+  const validateForm = (): boolean => {
     const errors: Record<string, string> = {}
     
-    // Required fields validation
-    if (!formData.materialCode?.trim()) {
-      errors.materialCode = 'Material Code is required'
-    }
-    
-    if (!formData.description?.trim()) {
-      errors.description = 'Material Description is required'
-    }
-    
-    if (!formData.vendorId?.trim()) {
-      errors.vendorId = 'Vendor ID is required'
-    }
-
-    // Additional validation for plant code
-    if (!formData.plantCode?.trim()) {
-      errors.plantCode = 'Plant Code is required'
+    if (!formData.material?.trim()) {
+      errors.material = 'Material is required'
     }
     
     setFormErrors(errors)
@@ -129,320 +119,208 @@ export function MaterialEntryForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // First validate required fields
-    if (!validateRequiredFields()) {
-      toast.error('Please fill in all required fields marked with *')
+    if (!validateForm()) {
       return
     }
     
-    // Then check AI risk score
-    if (analysis?.riskScore && analysis.riskScore > 50) {
-      toast.error('Cannot submit: High risk score detected. Please resolve validation issues.')
-      return
-    }
-    
-    // Check for validation errors from AI
-    const hasAIErrors = analysis?.validations?.some(v => v.status === 'error')
-    if (hasAIErrors) {
-      toast.error('Cannot submit: Please resolve AI validation errors.')
-      return
-    }
-    
-    toast.success('Material submitted successfully! (This is a PoC demo)')
+    // Handle submission
+    console.log('Form submitted:', formData)
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Main Form */}
-      <div className="lg:col-span-2">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Bot className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-800">AI-Powered Material Entry</h2>
-            {isAnalyzing && (
-              <div className="ml-auto flex items-center gap-2 text-blue-600">
-                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">Analyzing...</span>
-              </div>
-            )}
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-xl font-semibold mb-6">General Data</h2>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-[200px,1fr] gap-4 items-center">
+          {/* Material */}
+          <label className="text-sm font-medium text-gray-700">Material:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.material}
+              onChange={(e) => handleInputChange('material', e.target.value)}
+              className={getInputClassName('material')}
+              placeholder="S1566153"
+            />
+            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+              <Search className="w-4 h-4" />
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Material Code */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Material Code *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.materialCode || ''}
-                    onChange={(e) => handleInputChange('materialCode', e.target.value)}
-                    className={getInputClassName('materialCode')}
-                    placeholder="STL001"
-                  />
-                  {analysis?.suggestions?.materialCode && (
-                    <button
-                      type="button"
-                      onClick={() => setShowSuggestions(prev => ({ ...prev, materialCode: !prev.materialCode }))}
-                      className="absolute right-2 top-2 text-blue-600 hover:text-blue-700"
-                    >
-                      <Lightbulb className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                {getFormErrorMessage('materialCode') && (
-                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
-                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <p>{getFormErrorMessage('materialCode')}</p>
-                  </div>
-                )}
-                {getValidationMessage('materialCode') && !getFormErrorMessage('materialCode') && (
-                  <ValidationMessage validation={getValidationMessage('materialCode')!} />
-                )}
-                {showSuggestions.materialCode && analysis?.suggestions?.materialCode && (
-                  <SuggestionsList
-                    suggestions={analysis.suggestions.materialCode}
-                    onApply={(suggestion) => applySuggestion('materialCode', suggestion)}
-                  />
-                )}
-              </div>
+          {/* Base Unit of Measure */}
+          <label className="text-sm font-medium text-gray-700">Base Unit of Measure:*</label>
+          <div className="flex gap-2">
+            <select
+              value={formData.baseUnitOfMeasure}
+              onChange={(e) => handleInputChange('baseUnitOfMeasure', e.target.value)}
+              className={getInputClassName('baseUnitOfMeasure')}
+            >
+              <option value="EA">EA</option>
+              <option value="PCS">PCS</option>
+              <option value="KG">KG</option>
+              <option value="M">M</option>
+            </select>
+            <span className="py-2 text-gray-600">each</span>
+          </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Material Description *
-                </label>
-                <input
-                  type="text"
-                  value={formData.description || ''}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className={getInputClassName('description')}
-                  placeholder="Steel Rod 10mm"
-                />
-                {getFormErrorMessage('description') && (
-                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
-                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <p>{getFormErrorMessage('description')}</p>
-                  </div>
-                )}
-                {getValidationMessage('description') && !getFormErrorMessage('description') && (
-                  <ValidationMessage validation={getValidationMessage('description')!} />
-                )}
-              </div>
+          {/* Material Type */}
+          <label className="text-sm font-medium text-gray-700">Material Type:*</label>
+          <div className="flex gap-2">
+            <select
+              value={formData.materialType}
+              onChange={(e) => handleInputChange('materialType', e.target.value)}
+              className={getInputClassName('materialType')}
+            >
+              <option value="ZDRL">ZDRL</option>
+            </select>
+            <span className="py-2 text-gray-600">Drilling Materials</span>
+          </div>
 
-              {/* Material Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Material Type
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.materialType || ''}
-                    onChange={(e) => handleInputChange('materialType', e.target.value)}
-                    className={getInputClassName('materialType')}
-                    placeholder="ROD"
-                  />
-                  {analysis?.suggestions?.materialType && (
-                    <button
-                      type="button"
-                      onClick={() => setShowSuggestions(prev => ({ ...prev, materialType: !prev.materialType }))}
-                      className="absolute right-2 top-2 text-blue-600 hover:text-blue-700"
-                    >
-                      <Lightbulb className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                {showSuggestions.materialType && analysis?.suggestions?.materialType && (
-                  <SuggestionsList
-                    suggestions={analysis.suggestions.materialType}
-                    onApply={(suggestion) => applySuggestion('materialType', suggestion)}
-                  />
-                )}
-              </div>
+          {/* Industry Sector */}
+          <label className="text-sm font-medium text-gray-700">Industry Sector:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.industrySector}
+              onChange={(e) => handleInputChange('industrySector', e.target.value)}
+              className={getInputClassName('industrySector')}
+              readOnly
+            />
+            <span className="py-2 text-gray-600">Oil Industry</span>
+          </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.category || ''}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
-                    className={getInputClassName('category')}
-                    placeholder="STEEL"
-                  />
-                  {analysis?.suggestions?.category && (
-                    <button
-                      type="button"
-                      onClick={() => setShowSuggestions(prev => ({ ...prev, category: !prev.category }))}
-                      className="absolute right-2 top-2 text-blue-600 hover:text-blue-700"
-                    >
-                      <Lightbulb className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                {showSuggestions.category && analysis?.suggestions?.category && (
-                  <SuggestionsList
-                    suggestions={analysis.suggestions.category}
-                    onApply={(suggestion) => applySuggestion('category', suggestion)}
-                  />
-                )}
-              </div>
+          {/* Material Group */}
+          <label className="text-sm font-medium text-gray-700">Material Group:*</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.materialGroup}
+              onChange={(e) => handleInputChange('materialGroup', e.target.value)}
+              className={getInputClassName('materialGroup')}
+            />
+            <span className="py-2 text-gray-600">SELF INDEXING GUIDE</span>
+          </div>
 
-              {/* Plant Code */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Plant Code *
-                </label>
-                <select
-                  value={formData.plantCode || ''}
-                  onChange={(e) => handleInputChange('plantCode', e.target.value)}
-                  className={`${getInputClassName('plantCode')} text-gray-900`}
-                >
-                  <option value="" className="text-gray-500">Select Plant</option>
-                  {getPlantCodes().map((plant) => (
-                    <option key={plant.code} value={plant.code} className="text-gray-900">
-                      {plant.name}
-                    </option>
-                  ))}
-                </select>
-                {getFormErrorMessage('plantCode') && (
-                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
-                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <p>{getFormErrorMessage('plantCode')}</p>
-                  </div>
-                )}
-              </div>
+          {/* Old Material Number */}
+          <label className="text-sm font-medium text-gray-700">Old Material Number:</label>
+          <input
+            type="text"
+            value={formData.oldMaterialNumber}
+            onChange={(e) => handleInputChange('oldMaterialNumber', e.target.value)}
+            className={getInputClassName('oldMaterialNumber')}
+          />
 
-              {/* Unit of Measure */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Unit of Measure
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.unitOfMeasure || ''}
-                    onChange={(e) => handleInputChange('unitOfMeasure', e.target.value)}
-                    className={getInputClassName('unitOfMeasure')}
-                    placeholder="MT"
-                  />
-                  {analysis?.suggestions?.unitOfMeasure && (
-                    <button
-                      type="button"
-                      onClick={() => setShowSuggestions(prev => ({ ...prev, unitOfMeasure: !prev.unitOfMeasure }))}
-                      className="absolute right-2 top-2 text-blue-600 hover:text-blue-700"
-                    >
-                      <Lightbulb className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                {showSuggestions.unitOfMeasure && analysis?.suggestions?.unitOfMeasure && (
-                  <SuggestionsList
-                    suggestions={analysis.suggestions.unitOfMeasure}
-                    onApply={(suggestion) => applySuggestion('unitOfMeasure', suggestion)}
-                  />
-                )}
-              </div>
+          {/* Cross Reference Material */}
+          <label className="text-sm font-medium text-gray-700">Cross Reference Material:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.crossReferenceMaterial}
+              onChange={(e) => handleInputChange('crossReferenceMaterial', e.target.value)}
+              className={getInputClassName('crossReferenceMaterial')}
+              placeholder="Old Material Number"
+            />
+            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
 
-              {/* Vendor ID */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vendor ID *
-                </label>
-                <input
-                  type="text"
-                  value={formData.vendorId || ''}
-                  onChange={(e) => handleInputChange('vendorId', e.target.value)}
-                  className={getInputClassName('vendorId')}
-                  placeholder="200001 (Qualified vendors start with 200)"
-                />
-                {getFormErrorMessage('vendorId') && (
-                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
-                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <p>{getFormErrorMessage('vendorId')}</p>
-                  </div>
-                )}
-                {getValidationMessage('vendorId') && !getFormErrorMessage('vendorId') && (
-                  <ValidationMessage validation={getValidationMessage('vendorId')!} />
-                )}
-              </div>
+          {/* Cross-Plant Material Status */}
+          <label className="text-sm font-medium text-gray-700">Cross-Plant Material Status:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.crossPlantMaterialStatus}
+              onChange={(e) => handleInputChange('crossPlantMaterialStatus', e.target.value)}
+              className={getInputClassName('crossPlantMaterialStatus')}
+            />
+            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
 
-              {/* Manufacturer ID */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Manufacturer ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.manufacturerId || ''}
-                  onChange={(e) => handleInputChange('manufacturerId', e.target.value)}
-                  className={getInputClassName('manufacturerId')}
-                  placeholder="200101"
-                />
-              </div>
-            </div>
+          {/* Common material flag */}
+          <label className="text-sm font-medium text-gray-700">Common material flag:</label>
+          <input
+            type="checkbox"
+            checked={formData.commonMaterialFlag}
+            onChange={(e) => handleInputChange('commonMaterialFlag', e.target.checked)}
+            className={getInputClassName('commonMaterialFlag')}
+          />
 
-            {/* Base Price */}
-            <div className="w-full md:w-1/2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Base Price
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.basePrice || ''}
-                onChange={(e) => handleInputChange('basePrice', parseFloat(e.target.value))}
-                className={getInputClassName('basePrice')}
-                placeholder="150.00"
-              />
-            </div>
+          {/* Batch Management */}
+          <label className="text-sm font-medium text-gray-700">Batch Management:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.batchManagement}
+              onChange={(e) => handleInputChange('batchManagement', e.target.value)}
+              className={getInputClassName('batchManagement')}
+              readOnly
+            />
+          </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className={`sap-button ${
-                  (Object.keys(formErrors).length > 0) || 
-                  (analysis?.riskScore && analysis.riskScore > 50) ||
-                  (analysis?.validations?.some(v => v.status === 'error'))
-                    ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                disabled={
-                  (Object.keys(formErrors).length > 0) || 
-                  (analysis?.riskScore && analysis.riskScore > 50) ||
-                  (analysis?.validations?.some(v => v.status === 'error'))
-                }
-              >
-                Submit Material
-              </button>
-            </div>
-            
-            {/* Validation Summary */}
-            {Object.keys(formErrors).length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-red-800 mb-2">
-                  <XCircle className="w-5 h-5" />
-                  <h4 className="font-medium">Required Fields Missing</h4>
-                </div>
-                <p className="text-sm text-red-700">
-                  Please fill in all required fields marked with * to continue.
-                </p>
-              </div>
-            )}
-          </form>
+          {/* Serialization Level */}
+          <label className="text-sm font-medium text-gray-700">Serialization Level:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.serializationLevel}
+              onChange={(e) => handleInputChange('serializationLevel', e.target.value)}
+              className={getInputClassName('serializationLevel')}
+              readOnly
+            />
+          </div>
+
+          {/* Approved Batch Record Required Indicator */}
+          <label className="text-sm font-medium text-gray-700">Approved Batch Record Required Indicator:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.approvedBatchRecordRequired}
+              onChange={(e) => handleInputChange('approvedBatchRecordRequired', e.target.value)}
+              className={getInputClassName('approvedBatchRecordRequired')}
+              readOnly
+            />
+          </div>
+
+          {/* Division */}
+          <label className="text-sm font-medium text-gray-700">Division:</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.division}
+              onChange={(e) => handleInputChange('division', e.target.value)}
+              className={getInputClassName('division')}
+            />
+            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Catalog Enabled */}
+          <label className="text-sm font-medium text-gray-700">Catalog Enabled:</label>
+          <input
+            type="checkbox"
+            checked={formData.catalogEnabled}
+            onChange={(e) => handleInputChange('catalogEnabled', e.target.checked)}
+            className={getInputClassName('catalogEnabled')}
+          />
         </div>
-      </div>
 
-      {/* AI Analysis Panel */}
-      <div className="space-y-6">
-        {analysis && <AIAnalysisPanel analysis={analysis} />}
-      </div>
+        {/* Error Messages */}
+        {Object.keys(formErrors).length > 0 && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded">
+            <h4 className="text-red-800 font-medium mb-2">Please correct the following errors:</h4>
+            <ul className="list-disc list-inside text-red-700">
+              {Object.entries(formErrors).map(([field, error]) => (
+                <li key={field}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </form>
     </div>
   )
 }
