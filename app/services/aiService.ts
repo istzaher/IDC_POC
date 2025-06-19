@@ -232,7 +232,7 @@ export class AIValidationService {
     } else if (materialDesc.includes('bit') || materialDesc.includes('tool') || materialDesc.includes('guide')) {
       suggestions.baseUnitOfMeasure = ['EA', 'PCS']
     } else if (materialDesc.includes('cement') || materialDesc.includes('chemical') || materialDesc.includes('additive')) {
-      suggestions.baseUnitOfMeasure = ['KG', 'L']
+      suggestions.baseUnitOfMeasure = ['KG', 'LTR']
     } else if (materialDesc.includes('cable') || materialDesc.includes('electrical')) {
       suggestions.baseUnitOfMeasure = ['M', 'EA']
     } else {

@@ -263,6 +263,8 @@ export function MaterialEntryForm() {
                 <option value="PCS">PCS (pieces)</option>
                 <option value="KG">KG (kilogram)</option>
                 <option value="M">M (meter)</option>
+                <option value="LTR">LTR (liter)</option>
+                <option value="FT">FT (feet)</option>
               </select>
               {analysis?.suggestions?.baseUnitOfMeasure && (
                 <button
