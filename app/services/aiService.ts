@@ -170,7 +170,7 @@ export class AIValidationService {
     return `${prefix}${number}`
   }
 
-  private suggestMaterialType(description: string): string[] {
+  public suggestMaterialType(description: string): string[] {
     const desc = description.toLowerCase()
     if (desc.includes('rod') || desc.includes('bar')) return ['ROD', 'BAR']
     if (desc.includes('cement')) return ['CEMENT', 'POWDER']
