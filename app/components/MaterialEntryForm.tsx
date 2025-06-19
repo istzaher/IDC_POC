@@ -129,7 +129,16 @@ export function MaterialEntryForm() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-6">General Data</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">General Data</h2>
+        {isAnalyzing && (
+          <div className="flex items-center gap-2 text-blue-600">
+            <Bot className="w-5 h-5" />
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm">AI analyzing...</span>
+          </div>
+        )}
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-[200px,1fr] gap-4 items-center">
@@ -140,7 +149,7 @@ export function MaterialEntryForm() {
               type="text"
               value={formData.material}
               onChange={(e) => handleInputChange('material', e.target.value)}
-              className={getInputClassName('material')}
+              className="sap-input flex-1"
               placeholder="S1566153"
             />
             <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
@@ -150,11 +159,11 @@ export function MaterialEntryForm() {
 
           {/* Base Unit of Measure */}
           <label className="text-sm font-medium text-gray-700">Base Unit of Measure:*</label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 relative">
             <select
               value={formData.baseUnitOfMeasure}
               onChange={(e) => handleInputChange('baseUnitOfMeasure', e.target.value)}
-              className={getInputClassName('baseUnitOfMeasure')}
+              className="sap-input w-24"
             >
               <option value="EA">EA</option>
               <option value="PCS">PCS</option>
@@ -162,20 +171,56 @@ export function MaterialEntryForm() {
               <option value="M">M</option>
             </select>
             <span className="py-2 text-gray-600">each</span>
+            {analysis?.suggestions?.baseUnitOfMeasure && (
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(prev => ({ ...prev, baseUnitOfMeasure: !prev.baseUnitOfMeasure }))}
+                className="absolute right-20 top-2 text-blue-600 hover:text-blue-700"
+                title="AI Suggestions Available"
+              >
+                <Lightbulb className="w-4 h-4" />
+              </button>
+            )}
           </div>
+          {showSuggestions.baseUnitOfMeasure && analysis?.suggestions?.baseUnitOfMeasure && (
+            <div className="col-start-2">
+              <SuggestionsList
+                suggestions={analysis.suggestions.baseUnitOfMeasure}
+                onApply={(suggestion) => applySuggestion('baseUnitOfMeasure', suggestion)}
+              />
+            </div>
+          )}
 
           {/* Material Type */}
           <label className="text-sm font-medium text-gray-700">Material Type:*</label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 relative">
             <select
               value={formData.materialType}
               onChange={(e) => handleInputChange('materialType', e.target.value)}
-              className={getInputClassName('materialType')}
+              className="sap-input w-24"
             >
               <option value="ZDRL">ZDRL</option>
             </select>
             <span className="py-2 text-gray-600">Drilling Materials</span>
+            {analysis?.suggestions?.materialType && (
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(prev => ({ ...prev, materialType: !prev.materialType }))}
+                className="absolute right-20 top-2 text-blue-600 hover:text-blue-700"
+                title="AI Suggestions Available"
+              >
+                <Lightbulb className="w-4 h-4" />
+              </button>
+            )}
           </div>
+          {showSuggestions.materialType && analysis?.suggestions?.materialType && (
+            <div className="col-start-2">
+              <SuggestionsList
+                suggestions={analysis.suggestions.materialType}
+                onApply={(suggestion) => applySuggestion('materialType', suggestion)}
+              />
+            </div>
+          )}
 
           {/* Industry Sector */}
           <label className="text-sm font-medium text-gray-700">Industry Sector:</label>
@@ -184,7 +229,7 @@ export function MaterialEntryForm() {
               type="text"
               value={formData.industrySector}
               onChange={(e) => handleInputChange('industrySector', e.target.value)}
-              className={getInputClassName('industrySector')}
+              className="sap-input w-24"
               readOnly
             />
             <span className="py-2 text-gray-600">Oil Industry</span>
@@ -192,15 +237,33 @@ export function MaterialEntryForm() {
 
           {/* Material Group */}
           <label className="text-sm font-medium text-gray-700">Material Group:*</label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 relative">
             <input
               type="text"
               value={formData.materialGroup}
               onChange={(e) => handleInputChange('materialGroup', e.target.value)}
-              className={getInputClassName('materialGroup')}
+              className="sap-input w-24"
             />
             <span className="py-2 text-gray-600">SELF INDEXING GUIDE</span>
+            {analysis?.suggestions?.materialGroup && (
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(prev => ({ ...prev, materialGroup: !prev.materialGroup }))}
+                className="absolute right-20 top-2 text-blue-600 hover:text-blue-700"
+                title="AI Suggestions Available"
+              >
+                <Lightbulb className="w-4 h-4" />
+              </button>
+            )}
           </div>
+          {showSuggestions.materialGroup && analysis?.suggestions?.materialGroup && (
+            <div className="col-start-2">
+              <SuggestionsList
+                suggestions={analysis.suggestions.materialGroup}
+                onApply={(suggestion) => applySuggestion('materialGroup', suggestion)}
+              />
+            </div>
+          )}
 
           {/* Old Material Number */}
           <label className="text-sm font-medium text-gray-700">Old Material Number:</label>
@@ -351,8 +414,8 @@ function SuggestionsList({ suggestions, onApply }: {
   onApply: (suggestion: string) => void 
 }) {
   return (
-    <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-2">
-      <p className="text-sm text-blue-800 font-medium mb-2">AI Suggestions:</p>
+    <div className="mt-1 bg-blue-50 border border-blue-200 rounded-md p-2">
+      <p className="text-xs text-blue-800 font-medium mb-2">AI Suggestions:</p>
       <div className="space-y-1">
         {suggestions.map((suggestion, index) => (
           <button

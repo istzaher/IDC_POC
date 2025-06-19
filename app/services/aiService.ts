@@ -218,35 +218,100 @@ export class AIValidationService {
   }
 
   // Complete AI Analysis
-  async analyzeEntry(material: Partial<Material>): Promise<AIAnalysis> {
-    const [duplicates, validations] = await Promise.all([
-      this.detectDuplicates(material),
-      this.validateFields(material)
-    ])
-
+  async analyzeEntry(material: any): Promise<AIAnalysis> {
+    const validations: ValidationResult[] = []
     const suggestions: Record<string, string[]> = {}
-    const fields = ['materialType', 'unitOfMeasure', 'category', 'vendorId']
     
-    for (const field of fields) {
-      suggestions[field] = await this.getSuggestions(field, material)
+    // Base Unit of Measure suggestions based on material description
+    if (material.material) {
+      const desc = material.material.toLowerCase()
+      if (desc.includes('guide')) {
+        suggestions.baseUnitOfMeasure = ['EA', 'PCS']
+      } else if (desc.includes('pipe')) {
+        suggestions.baseUnitOfMeasure = ['M', 'FT']
+      } else if (desc.includes('chemical')) {
+        suggestions.baseUnitOfMeasure = ['KG', 'L']
+      }
     }
 
-    // Calculate risk score
-    const errorCount = validations.filter(v => v.status === 'error').length
-    const warningCount = validations.filter(v => v.status === 'warning').length
-    const duplicateCount = duplicates.length
-    
-    const riskScore = Math.min(
-      (errorCount * 30 + warningCount * 15 + duplicateCount * 20),
-      100
-    )
+    // Material Type suggestions based on material code and description
+    if (material.material) {
+      suggestions.materialType = ['ZDRL', 'ZCHM', 'ZELE'].filter(type => {
+        const desc = material.material.toLowerCase()
+        if (desc.includes('drill') || desc.includes('guide')) return true
+        if (type === 'ZCHM' && desc.includes('chemical')) return true
+        if (type === 'ZELE' && desc.includes('electrical')) return true
+        return false
+      })
+    }
+
+    // Material Group (PG Code) suggestions based on material type
+    if (material.materialType) {
+      switch (material.materialType) {
+        case 'ZDRL':
+          suggestions.materialGroup = ['43JDX', '43KLM', '43MNP']
+          break
+        case 'ZCHM':
+          suggestions.materialGroup = ['44ABC', '44DEF', '44GHI']
+          break
+        case 'ZELE':
+          suggestions.materialGroup = ['45XYZ', '45UVW', '45RST']
+          break
+      }
+    }
+
+    // Add validations
+    if (material.material) {
+      // Validate material code format
+      if (!/^[A-Z0-9]{8}$/i.test(material.material)) {
+        validations.push({
+          field: 'material',
+          status: 'warning',
+          message: 'Material code should be 8 characters long',
+          suggestion: 'Consider using format: LETTERSNUMBERS (e.g., S1566153)'
+        })
+      }
+
+      // Validate material type selection
+      if (material.materialType && suggestions.materialType?.length && !suggestions.materialType.includes(material.materialType)) {
+        validations.push({
+          field: 'materialType',
+          status: 'warning',
+          message: 'Material type might not be optimal for this material',
+          suggestion: `Consider using one of the suggested types: ${suggestions.materialType.join(', ')}`
+        })
+      }
+
+      // Validate material group format
+      if (material.materialGroup && !/^\d{2}[A-Z]{3}$/i.test(material.materialGroup)) {
+        validations.push({
+          field: 'materialGroup',
+          status: 'warning',
+          message: 'Material group should follow format: 2 numbers + 3 letters',
+          suggestion: 'Example format: 43JDX'
+        })
+      }
+    }
+
+    // Calculate risk score based on validations
+    const riskScore = this.calculateRiskScore(validations)
+
+    // Find potential duplicates
+    const duplicates = await this.detectDuplicates(material)
 
     return {
-      duplicates,
-      validations,
       suggestions,
-      riskScore
+      validations,
+      riskScore,
+      duplicates
     }
+  }
+
+  private calculateRiskScore(validations: ValidationResult[]): number {
+    const errorCount = validations.filter(v => v.status === 'error').length
+    const warningCount = validations.filter(v => v.status === 'warning').length
+    
+    return Math.min(100, (errorCount * 30) + (warningCount * 15))
   }
 }
 
