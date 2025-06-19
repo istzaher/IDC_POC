@@ -21,7 +21,7 @@ export default function RootLayout({
         <div className="min-h-screen bg-gray-50">
           <header className="bg-slate-900 text-white p-4">
             <div className="max-w-7xl mx-auto">
-              <h1 className="text-2xl font-bold">SAP AI Validation PoC</h1>
+              <h1 className="text-2xl font-bold">AI CR Validation</h1>
               <p className="text-blue-200">AI-Powered Data Entry & Validation System</p>
             </div>
           </header>
