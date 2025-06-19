@@ -1,6 +1,6 @@
 # Client Data Integration Guide
 
-This guide explains how to integrate real client data into the SAP AI Validation PoC when you receive it from the client.
+This guide explains how to integrate real client data into the AI-Powered Data Entry & Validation System when you receive it from the client.
 
 ## 📋 Expected Data Types
 

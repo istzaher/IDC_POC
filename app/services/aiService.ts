@@ -222,120 +222,105 @@ export class AIValidationService {
     const validations: ValidationResult[] = []
     const suggestions: Record<string, string[]> = {}
     
-    // Always provide Base Unit of Measure suggestions for 100% coverage
-    suggestions.baseUnitOfMeasure = ['EA', 'PCS', 'KG', 'M']
+    // Get material description (either from materialDescription field or material field)
+    const materialDesc = (material.materialDescription || material.material || '').toLowerCase()
+    const materialCode = (material.material || '').toLowerCase()
     
-    // Base Unit of Measure suggestions based on material description
-    if (material.material) {
-      const desc = material.material.toLowerCase()
-      if (desc.includes('guide')) {
-        suggestions.baseUnitOfMeasure = ['EA', 'PCS']
-      } else if (desc.includes('pipe')) {
-        suggestions.baseUnitOfMeasure = ['M', 'FT']
-      } else if (desc.includes('chemical')) {
-        suggestions.baseUnitOfMeasure = ['KG', 'L']
+    // Base Unit of Measure suggestions - limit to 1-2 most relevant
+    if (materialDesc.includes('rod') || materialDesc.includes('pipe')) {
+      suggestions.baseUnitOfMeasure = ['M', 'FT']
+    } else if (materialDesc.includes('bit') || materialDesc.includes('tool') || materialDesc.includes('guide')) {
+      suggestions.baseUnitOfMeasure = ['EA', 'PCS']
+    } else if (materialDesc.includes('cement') || materialDesc.includes('chemical') || materialDesc.includes('additive')) {
+      suggestions.baseUnitOfMeasure = ['KG', 'L']
+    } else if (materialDesc.includes('cable') || materialDesc.includes('electrical')) {
+      suggestions.baseUnitOfMeasure = ['M', 'EA']
+    } else {
+      // Default suggestions
+      suggestions.baseUnitOfMeasure = ['EA', 'PCS']
+    }
+    
+    // Material Type suggestions - limit to 1-2 most relevant
+    if (materialDesc.includes('drill') || materialDesc.includes('bit') || materialDesc.includes('guide') || 
+        materialDesc.includes('tool') || materialCode.startsWith('drl') || materialCode.startsWith('stl')) {
+      suggestions.materialType = ['ZDRL']
+    } else if (materialDesc.includes('chemical') || materialDesc.includes('cement') || 
+               materialDesc.includes('fluid') || materialDesc.includes('additive') || 
+               materialCode.startsWith('chm') || materialCode.startsWith('cem')) {
+      suggestions.materialType = ['ZCHM']
+    } else if (materialDesc.includes('electrical') || materialDesc.includes('cable') || 
+               materialDesc.includes('wire') || materialDesc.includes('connector') || 
+               materialCode.startsWith('ele') || materialCode.startsWith('pip')) {
+      suggestions.materialType = ['ZELE']
+    } else {
+      // If no specific match, provide 2 most likely options based on common patterns
+      suggestions.materialType = ['ZDRL', 'ZCHM']
+    }
+    
+    // Industry Sector suggestions - limit to 1-2 most relevant based on material type and description
+    if (material.materialType === 'ZDRL' || materialDesc.includes('drill') || 
+        materialDesc.includes('bit') || materialDesc.includes('oil') || materialDesc.includes('gas')) {
+      suggestions.industrySector = ['O'] // Oil & Gas
+    } else if (material.materialType === 'ZCHM' || materialDesc.includes('chemical') || 
+               materialDesc.includes('cement') || materialDesc.includes('additive')) {
+      suggestions.industrySector = ['C'] // Chemical
+    } else if (material.materialType === 'ZELE' || materialDesc.includes('electrical') || 
+               materialDesc.includes('cable') || materialDesc.includes('power')) {
+      suggestions.industrySector = ['E'] // Electrical
+    } else if (materialDesc.includes('pipe') || materialDesc.includes('manufacturing') || 
+               materialDesc.includes('production')) {
+      suggestions.industrySector = ['M'] // Manufacturing
+    } else if (materialDesc.includes('construction') || materialDesc.includes('building')) {
+      suggestions.industrySector = ['B'] // Construction
+    } else {
+      // Default based on material type or general use
+      if (material.materialType === 'ZDRL') {
+        suggestions.industrySector = ['O'] // Oil & Gas
+      } else if (material.materialType === 'ZCHM') {
+        suggestions.industrySector = ['C'] // Chemical
+      } else if (material.materialType === 'ZELE') {
+        suggestions.industrySector = ['E'] // Electrical
+      } else {
+        suggestions.industrySector = ['O', 'M'] // Default to Oil & Gas and Manufacturing
       }
     }
-
-    // Always provide Material Type suggestions for 100% coverage
-    suggestions.materialType = ['ZDRL', 'ZCHM', 'ZELE']
     
-    // Material Type suggestions based on material code and description
-    if (material.material) {
-      const desc = material.material.toLowerCase()
-      const materialTypeSuggestions = []
-      
-      // Always include ZDRL for drilling-related materials (default)
-      if (desc.includes('drill') || desc.includes('guide') || desc.includes('bit') || desc.includes('tool')) {
-        materialTypeSuggestions.push('ZDRL')
+    // Material Group suggestions - provide 1-2 most relevant based on material type and description
+    if (material.materialType === 'ZDRL') {
+      if (materialDesc.includes('bit')) {
+        suggestions.materialGroup = ['43MNP (DRILL BITS)']
+      } else if (materialDesc.includes('guide')) {
+        suggestions.materialGroup = ['43JDX (SELF INDEXING GUIDE)']
+      } else {
+        suggestions.materialGroup = ['43KLM (DRILLING TOOLS)']
       }
-      
-      // Include ZCHM for chemical-related materials
-      if (desc.includes('chemical') || desc.includes('fluid') || desc.includes('compound') || desc.includes('solution')) {
-        materialTypeSuggestions.push('ZCHM')
+    } else if (material.materialType === 'ZCHM') {
+      if (materialDesc.includes('cement') || materialDesc.includes('additive')) {
+        suggestions.materialGroup = ['44GHI (CEMENT ADDITIVES)']
+      } else if (materialDesc.includes('fluid')) {
+        suggestions.materialGroup = ['44DEF (DRILLING FLUIDS)']
+      } else {
+        suggestions.materialGroup = ['44ABC (CHEMICAL COMPOUNDS)']
       }
-      
-      // Include ZELE for electrical-related materials
-      if (desc.includes('electrical') || desc.includes('cable') || desc.includes('wire') || desc.includes('connector')) {
-        materialTypeSuggestions.push('ZELE')
+    } else if (material.materialType === 'ZELE') {
+      if (materialDesc.includes('control') || materialDesc.includes('system')) {
+        suggestions.materialGroup = ['45UVW (CONTROL SYSTEMS)']
+      } else if (materialDesc.includes('power') || materialDesc.includes('supply')) {
+        suggestions.materialGroup = ['45RST (POWER SUPPLIES)']
+      } else {
+        suggestions.materialGroup = ['45XYZ (ELECTRICAL COMPONENTS)']
       }
-      
-      // If specific keywords found, prioritize those suggestions
-      if (materialTypeSuggestions.length > 0) {
-        suggestions.materialType = materialTypeSuggestions;
-      }
-    }
-
-    // Always provide Industry Sector suggestions for 100% coverage
-    suggestions.industrySector = ['O', 'C', 'M', 'B', 'E']
-    
-    // Industry Sector suggestions based on material type and description
-    if (material.material || material.materialType) {
-      const desc = material.material ? material.material.toLowerCase() : ''
-      const industrySectorSuggestions = []
-      
-      // Oil & Gas industry (default for drilling materials)
-      if (desc.includes('drill') || desc.includes('guide') || desc.includes('oil') || desc.includes('gas') || material.materialType === 'ZDRL') {
-        industrySectorSuggestions.push('O')
-      }
-      
-      // Chemical industry
-      if (desc.includes('chemical') || desc.includes('fluid') || desc.includes('compound') || material.materialType === 'ZCHM') {
-        industrySectorSuggestions.push('C')
-      }
-      
-      // Manufacturing industry
-      if (desc.includes('manufacturing') || desc.includes('production') || desc.includes('assembly')) {
-        industrySectorSuggestions.push('M')
-      }
-      
-      // Construction industry
-      if (desc.includes('construction') || desc.includes('building') || desc.includes('infrastructure')) {
-        industrySectorSuggestions.push('B')
-      }
-      
-      // Electrical industry
-      if (desc.includes('electrical') || desc.includes('power') || desc.includes('cable') || material.materialType === 'ZELE') {
-        industrySectorSuggestions.push('E')
-      }
-      
-      // If specific keywords found, prioritize those suggestions
-      if (industrySectorSuggestions.length > 0) {
-        suggestions.industrySector = industrySectorSuggestions;
-      }
-    }
-
-    // Always provide Material Group suggestions for 100% coverage
-    suggestions.materialGroup = [
-      '43JDX (SELF INDEXING GUIDE)', 
-      '43KLM (DRILLING TOOLS)', 
-      '43MNP (DRILL BITS)'
-    ]
-    
-    // Material Group (PG Code) suggestions based on material type
-    if (material.materialType) {
-      switch (material.materialType) {
-        case 'ZDRL':
-          suggestions.materialGroup = [
-            '43JDX (SELF INDEXING GUIDE)', 
-            '43KLM (DRILLING TOOLS)', 
-            '43MNP (DRILL BITS)'
-          ]
-          break
-        case 'ZCHM':
-          suggestions.materialGroup = [
-            '44ABC (CHEMICAL COMPOUNDS)', 
-            '44DEF (DRILLING FLUIDS)', 
-            '44GHI (CEMENT ADDITIVES)'
-          ]
-          break
-        case 'ZELE':
-          suggestions.materialGroup = [
-            '45XYZ (ELECTRICAL COMPONENTS)', 
-            '45UVW (CONTROL SYSTEMS)', 
-            '45RST (POWER SUPPLIES)'
-          ]
-          break
+    } else {
+      // Default suggestions based on material description
+      if (materialDesc.includes('drill') || materialDesc.includes('bit')) {
+        suggestions.materialGroup = ['43MNP (DRILL BITS)', '43KLM (DRILLING TOOLS)']
+      } else if (materialDesc.includes('chemical') || materialDesc.includes('additive')) {
+        suggestions.materialGroup = ['44ABC (CHEMICAL COMPOUNDS)', '44GHI (CEMENT ADDITIVES)']
+      } else if (materialDesc.includes('electrical') || materialDesc.includes('cable')) {
+        suggestions.materialGroup = ['45XYZ (ELECTRICAL COMPONENTS)', '45RST (POWER SUPPLIES)']
+      } else {
+        // Generic fallback
+        suggestions.materialGroup = ['43KLM (DRILLING TOOLS)', '44ABC (CHEMICAL COMPOUNDS)']
       }
     }
 

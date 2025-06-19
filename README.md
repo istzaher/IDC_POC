@@ -1,4 +1,4 @@
-# SAP AI Validation Proof of Concept (PoC)
+# AI-Powered Data Entry & Validation System (PoC)
 
 ## 🚀 Overview
 
@@ -233,7 +233,7 @@ This is a Proof of Concept for demonstration purposes. For production implementa
 
 ## 📄 License
 
-This project is created for demonstration purposes as a Proof of Concept for SAP AI validation solutions.
+This project is created for demonstration purposes as a Proof of Concept for AI-Powered Data Entry & Validation System solutions.
 
 ## 🔗 Additional Resources
 

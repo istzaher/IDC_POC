@@ -268,10 +268,16 @@ export function MaterialEntryForm() {
                 <button
                   type="button"
                   onClick={() => setShowSuggestions(prev => ({ ...prev, baseUnitOfMeasure: !prev.baseUnitOfMeasure }))}
-                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-md"
                   title="AI Suggestions Available"
                 >
-                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                  <div className="relative">
+                    <Lightbulb className="w-5 h-5 animate-pulse" />
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  </div>
                 </button>
               )}
             </div>
@@ -303,10 +309,16 @@ export function MaterialEntryForm() {
                 <button
                   type="button"
                   onClick={() => setShowSuggestions(prev => ({ ...prev, materialType: !prev.materialType }))}
-                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-md"
                   title="AI Suggestions Available"
                 >
-                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                  <div className="relative">
+                    <Lightbulb className="w-5 h-5 animate-pulse" />
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  </div>
                 </button>
               )}
             </div>
@@ -340,10 +352,16 @@ export function MaterialEntryForm() {
                 <button
                   type="button"
                   onClick={() => setShowSuggestions(prev => ({ ...prev, industrySector: !prev.industrySector }))}
-                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-md"
                   title="AI Suggestions Available"
                 >
-                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                  <div className="relative">
+                    <Lightbulb className="w-5 h-5 animate-pulse" />
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  </div>
                 </button>
               )}
             </div>
@@ -393,10 +411,16 @@ export function MaterialEntryForm() {
                 <button
                   type="button"
                   onClick={() => setShowSuggestions(prev => ({ ...prev, materialGroup: !prev.materialGroup }))}
-                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-md"
                   title="AI Suggestions Available"
                 >
-                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                  <div className="relative">
+                    <Lightbulb className="w-5 h-5 animate-pulse" />
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  </div>
                 </button>
               )}
             </div>
@@ -592,18 +616,27 @@ function SuggestionsList({ suggestions, onApply }: {
   suggestions: string[]
   onApply: (suggestion: string) => void 
 }) {
+  // Limit to max 2 suggestions for cleaner UI
+  const limitedSuggestions = suggestions.slice(0, 2)
+  
   return (
-    <div className="mt-1 bg-blue-50 border border-blue-200 rounded-md p-2">
-      <p className="text-xs text-blue-800 font-medium mb-2">AI Suggestions:</p>
+    <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded-md shadow-sm">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Lightbulb className="w-4 h-4 text-amber-500" />
+        <p className="text-xs font-medium text-amber-700">AI Suggestions</p>
+      </div>
       <div className="space-y-1">
-        {suggestions.map((suggestion, index) => (
-          <button
-            key={index}
-            onClick={() => onApply(suggestion)}
-            className="block w-full text-left text-sm text-blue-700 hover:text-blue-900 hover:bg-blue-100 px-2 py-1 rounded"
-          >
-            {suggestion}
-          </button>
+        {limitedSuggestions.map((suggestion, index) => (
+          <div key={index} className="flex items-center justify-between">
+            <span className="text-sm text-gray-700">{suggestion}</span>
+            <button
+              type="button"
+              onClick={() => onApply(suggestion)}
+              className="text-xs px-2 py-1 bg-white hover:bg-amber-100 text-amber-700 border border-amber-300 rounded-md"
+            >
+              Apply
+            </button>
+          </div>
         ))}
       </div>
     </div>

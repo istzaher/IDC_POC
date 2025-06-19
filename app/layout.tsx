@@ -6,7 +6,7 @@ import { Toaster } from 'react-hot-toast'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'SAP AI Validation PoC',
+  title: 'AI-Powered Data Entry & Validation System',
   description: 'AI-Powered SAP Data Entry Validation Proof of Concept',
 }
 

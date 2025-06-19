@@ -1,4 +1,4 @@
-// Central Data Management System for SAP AI Validation PoC
+// Central Data Management System for AI-Powered Data Entry & Validation System
 // This file manages both mock data and real client data
 
 import { Material, Vendor, Manufacturer } from '../types'
