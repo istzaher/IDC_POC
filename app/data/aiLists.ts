@@ -10,20 +10,20 @@ export const MATERIAL_TYPES = [
 ]
 
 export const BASE_UNITS_OF_MEASURE = [
-  { code: 'EA', description: 'Each' },
-  { code: 'PCS', description: 'Pieces' },
-  { code: 'KG', description: 'Kilogram' },
-  { code: 'M', description: 'Meter' },
-  { code: 'LTR', description: 'Liter' },
-  { code: 'FT', description: 'Feet' },
-  { code: 'BAG', description: 'Bag' },
-  { code: 'MT', description: 'Metric Ton' },
-  { code: 'L', description: 'Length' },
-  { code: 'CM', description: 'Centimeter' },
-  { code: 'MM', description: 'Millimeter' },
-  { code: 'IN', description: 'Inch' },
-  { code: 'GAL', description: 'Gallon' },
-  { code: 'BBL', description: 'Barrel' }
+  { code: 'EA', description: 'each' },
+  { code: 'PCS', description: 'pieces' },
+  { code: 'KG', description: 'kilogram' },
+  { code: 'M', description: 'meter' },
+  { code: 'LTR', description: 'liter' },
+  { code: 'FT', description: 'feet' },
+  { code: 'BAG', description: 'bag' },
+  { code: 'MT', description: 'metric ton' },
+  { code: 'L', description: 'length' },
+  { code: 'CM', description: 'centimeter' },
+  { code: 'MM', description: 'millimeter' },
+  { code: 'IN', description: 'inch' },
+  { code: 'GAL', description: 'gallon' },
+  { code: 'BBL', description: 'barrel' }
 ]
 
 export const INDUSTRY_SECTORS = [

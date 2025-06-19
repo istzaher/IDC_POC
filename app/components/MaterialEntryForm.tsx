@@ -217,7 +217,7 @@ export function MaterialEntryForm() {
                       } else if (item.type === 'ZELE') {
                         handleInputChange('materialGroup', '45XYZ (ELECTRICAL COMPONENTS)');
                       }
-                      // Base unit of measure suggestions
+                      // Base unit of measure suggestions - use just the codes
                       if (item.desc.includes('Rod') || item.desc.includes('Pipe')) {
                         handleInputChange('baseUnitOfMeasure', 'M');
                       } else if (item.desc.includes('Bit') || item.desc.includes('Cable')) {
@@ -272,6 +272,8 @@ export function MaterialEntryForm() {
                 <option value="M">M (meter)</option>
                 <option value="LTR">LTR (liter)</option>
                 <option value="FT">FT (feet)</option>
+                <option value="BAG">BAG (bag)</option>
+                <option value="MT">MT (metric ton)</option>
               </select>
               {analysis?.suggestions?.baseUnitOfMeasure && (
                 <button
@@ -399,6 +401,9 @@ export function MaterialEntryForm() {
                     <option value="43JDX (SELF INDEXING GUIDE)">43JDX (SELF INDEXING GUIDE)</option>
                     <option value="43KLM (DRILLING TOOLS)">43KLM (DRILLING TOOLS)</option>
                     <option value="43MNP (DRILL BITS)">43MNP (DRILL BITS)</option>
+                    <option value="43ABC (DRILL PIPES)">43ABC (DRILL PIPES)</option>
+                    <option value="43DEF (DRILL COLLARS)">43DEF (DRILL COLLARS)</option>
+                    <option value="43GHI (DRILLING ACCESSORIES)">43GHI (DRILLING ACCESSORIES)</option>
                   </>
                 )}
                 {formData.materialType === 'ZCHM' && (
@@ -406,6 +411,9 @@ export function MaterialEntryForm() {
                     <option value="44ABC (CHEMICAL COMPOUNDS)">44ABC (CHEMICAL COMPOUNDS)</option>
                     <option value="44DEF (DRILLING FLUIDS)">44DEF (DRILLING FLUIDS)</option>
                     <option value="44GHI (CEMENT ADDITIVES)">44GHI (CEMENT ADDITIVES)</option>
+                    <option value="44JKL (CORROSION INHIBITORS)">44JKL (CORROSION INHIBITORS)</option>
+                    <option value="44MNO (CLEANING CHEMICALS)">44MNO (CLEANING CHEMICALS)</option>
+                    <option value="44PQR (PRODUCTION CHEMICALS)">44PQR (PRODUCTION CHEMICALS)</option>
                   </>
                 )}
                 {formData.materialType === 'ZELE' && (
@@ -413,6 +421,9 @@ export function MaterialEntryForm() {
                     <option value="45XYZ (ELECTRICAL COMPONENTS)">45XYZ (ELECTRICAL COMPONENTS)</option>
                     <option value="45UVW (CONTROL SYSTEMS)">45UVW (CONTROL SYSTEMS)</option>
                     <option value="45RST (POWER SUPPLIES)">45RST (POWER SUPPLIES)</option>
+                    <option value="45ABC (CABLES & WIRING)">45ABC (CABLES & WIRING)</option>
+                    <option value="45DEF (INSTRUMENTATION)">45DEF (INSTRUMENTATION)</option>
+                    <option value="45GHI (ELECTRICAL PANELS)">45GHI (ELECTRICAL PANELS)</option>
                   </>
                 )}
               </select>

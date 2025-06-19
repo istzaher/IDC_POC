@@ -163,7 +163,7 @@ function suggestMaterialType(description: string): string[] {
     }
   }
   
-  // Sort by score and return top 2
+  // Sort by score and return top 2 - return just the codes for Material Type
   suggestions.sort((a, b) => b.score - a.score)
   return suggestions.slice(0, 2).map(s => s.code)
 }
