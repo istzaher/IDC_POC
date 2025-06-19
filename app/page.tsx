@@ -5,6 +5,7 @@ import { MaterialEntryForm } from './components/MaterialEntryForm'
 import { DashboardStats } from './components/DashboardStats'
 import { ValidationHistory } from './components/ValidationHistory'
 import { AIFeatures } from './components/AIFeatures'
+import { AdminPanel } from './components/AdminPanel'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('entry')
@@ -14,6 +15,7 @@ export default function Home() {
     { id: 'dashboard', label: 'AI Dashboard', icon: '📊' },
     { id: 'history', label: 'Validation History', icon: '📋' },
     { id: 'features', label: 'AI Features', icon: '🤖' },
+    { id: 'admin', label: 'Admin Panel', icon: '⚙️' },
   ]
 
   return (
@@ -44,6 +46,7 @@ export default function Home() {
         {activeTab === 'dashboard' && <DashboardStats />}
         {activeTab === 'history' && <ValidationHistory />}
         {activeTab === 'features' && <AIFeatures />}
+        {activeTab === 'admin' && <AdminPanel />}
       </div>
     </div>
   )

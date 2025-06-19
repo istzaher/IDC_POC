@@ -226,44 +226,6 @@ export function AIFeatures() {
         </div>
       </div>
 
-      {/* Implementation Timeline */}
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-          <Database className="w-8 h-8 text-blue-600" />
-          Implementation Roadmap
-        </h3>
-        <div className="space-y-6">
-          <TimelineItem
-            phase="Phase 1"
-            title="Foundation Setup"
-            duration="2-3 weeks"
-            description="Data preparation, model training, and basic duplicate detection"
-            status="completed"
-          />
-          <TimelineItem
-            phase="Phase 2"
-            title="Core AI Features"
-            duration="3-4 weeks"
-            description="Field validation, vendor qualification, and knowledge graph implementation"
-            status="in-progress"
-          />
-          <TimelineItem
-            phase="Phase 3"
-            title="Advanced Integration"
-            duration="2-3 weeks"
-            description="SAP integration, real-time processing, and performance optimization"
-            status="planned"
-          />
-          <TimelineItem
-            phase="Phase 4"
-            title="Enhancement & Learning"
-            duration="Ongoing"
-            description="Continuous learning, model improvement, and feature expansion"
-            status="planned"
-          />
-        </div>
-      </div>
-
       {/* Detailed Feature Modal */}
       {selectedFeature && (
         <FeatureDetailModal

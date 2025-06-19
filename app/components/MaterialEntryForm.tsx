@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Material, AIAnalysis, ValidationResult } from '../types'
 import { aiService } from '../services/aiService'
+import { getPlantCodes } from '../data'
 import { AlertTriangle, CheckCircle, XCircle, Lightbulb, Search, Bot } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -304,9 +305,11 @@ export function MaterialEntryForm() {
                   className={`${getInputClassName('plantCode')} text-gray-900`}
                 >
                   <option value="" className="text-gray-500">Select Plant</option>
-                  <option value="P001" className="text-gray-900">Plant 001 - Mumbai</option>
-                  <option value="P002" className="text-gray-900">Plant 002 - Delhi</option>
-                  <option value="P003" className="text-gray-900">Plant 003 - Bangalore</option>
+                  {getPlantCodes().map((plant) => (
+                    <option key={plant.code} value={plant.code} className="text-gray-900">
+                      {plant.name}
+                    </option>
+                  ))}
                 </select>
                 {getFormErrorMessage('plantCode') && (
                   <div className="flex items-start gap-2 mt-1 text-sm text-red-600">

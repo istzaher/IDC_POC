@@ -1,95 +1,6 @@
 import Fuse from 'fuse.js'
 import { Material, Vendor, Manufacturer, ValidationResult, DuplicateMatch, AIAnalysis } from '../types'
-
-// Mock data for demonstration
-const mockMaterials: Material[] = [
-  {
-    id: '1',
-    materialCode: 'STL001',
-    description: 'Steel Rod 10mm',
-    materialType: 'ROD',
-    plantCode: 'P001',
-    vendorId: '200001',
-    manufacturerId: '200101',
-    unitOfMeasure: 'MT',
-    category: 'STEEL',
-    basePrice: 150.00,
-    createdAt: new Date('2023-01-15'),
-    status: 'approved'
-  },
-  {
-    id: '2',
-    materialCode: 'STL002',
-    description: '10mm Steel Rod',
-    materialType: 'ROD',
-    plantCode: 'P002',
-    vendorId: '200002',
-    manufacturerId: '200101',
-    unitOfMeasure: 'MT',
-    category: 'STEEL',
-    basePrice: 148.00,
-    createdAt: new Date('2023-02-20'),
-    status: 'approved'
-  },
-  {
-    id: '3',
-    materialCode: 'CEM001',
-    description: 'Portland Cement 50kg',
-    materialType: 'CEMENT',
-    plantCode: 'P001',
-    vendorId: '200003',
-    manufacturerId: '200102',
-    unitOfMeasure: 'BAG',
-    category: 'CEMENT',
-    basePrice: 25.00,
-    createdAt: new Date('2023-03-10'),
-    status: 'approved'
-  }
-]
-
-const mockVendors: Vendor[] = [
-  {
-    id: '200001',
-    name: 'Premium Steel Suppliers',
-    code: '200001',
-    isQualified: true,
-    category: ['STEEL', 'METAL'],
-    linkedManufacturers: ['200101']
-  },
-  {
-    id: '200002',
-    name: 'Global Steel Trading',
-    code: '200002',
-    isQualified: true,
-    category: ['STEEL', 'CONSTRUCTION'],
-    linkedManufacturers: ['200101', '200103']
-  },
-  {
-    id: '100001',
-    name: 'Old Steel Company',
-    code: '100001',
-    isQualified: false,
-    category: ['STEEL'],
-    linkedManufacturers: ['100101']
-  }
-]
-
-const mockManufacturers: Manufacturer[] = [
-  {
-    id: '200101',
-    name: 'Steel Works International',
-    code: '200101',
-    linkedVendors: ['200001', '200002'],
-    certifications: ['ISO9001', 'ISO14001']
-  },
-  {
-    id: '200102',
-    name: 'Cement Solutions Ltd',
-    code: '200102',
-    linkedVendors: ['200003'],
-    certifications: ['ISO9001']
-  }
-]
+import { getMaterials, getVendors, getManufacturers, getMaterialGroups, getUnitsOfMeasure } from '../data'
 
 // AI Service Functions
 export class AIValidationService {
@@ -101,7 +12,8 @@ export class AIValidationService {
 
   // 1. Duplicate Detection using Fuzzy Matching
   async detectDuplicates(newMaterial: Partial<Material>): Promise<DuplicateMatch[]> {
-    const fuse = new Fuse(mockMaterials, this.fuseOptions)
+    const materials = getMaterials()
+    const fuse = new Fuse(materials, this.fuseOptions)
     const results = fuse.search(newMaterial.description || '')
     
     return results.map(result => {
@@ -170,7 +82,8 @@ export class AIValidationService {
 
     // Vendor validation
     if (material.vendorId) {
-      const vendor = mockVendors.find(v => v.id === material.vendorId)
+      const vendors = getVendors()
+      const vendor = vendors.find(v => v.id === material.vendorId)
       if (!vendor) {
         validations.push({
           field: 'vendorId',
@@ -199,8 +112,10 @@ export class AIValidationService {
 
   // 3. Vendor/Manufacturer Linkage Validation
   async validateVendorManufacturerLink(vendorId: string, manufacturerId: string): Promise<ValidationResult> {
-    const vendor = mockVendors.find(v => v.id === vendorId)
-    const manufacturer = mockManufacturers.find(m => m.id === manufacturerId)
+    const vendors = getVendors()
+    const manufacturers = getManufacturers()
+    const vendor = vendors.find(v => v.id === vendorId)
+    const manufacturer = manufacturers.find(m => m.id === manufacturerId)
 
     if (!vendor || !manufacturer) {
       return {
@@ -211,7 +126,7 @@ export class AIValidationService {
     }
 
     if (!vendor.linkedManufacturers.includes(manufacturerId)) {
-      const suggestedManufacturers = mockManufacturers
+      const suggestedManufacturers = manufacturers
         .filter(m => vendor.linkedManufacturers.includes(m.id))
         .map(m => m.name)
         .join(', ')
@@ -286,13 +201,15 @@ export class AIValidationService {
   }
 
   private suggestVendors(category: string): string[] {
-    return mockVendors
+    const vendors = getVendors()
+    return vendors
       .filter(v => v.isQualified && v.category.includes(category))
       .map(v => v.id)
   }
 
   private suggestQualifiedVendor(category?: string): string {
-    const qualifiedVendors = mockVendors.filter(v => 
+    const vendors = getVendors()
+    const qualifiedVendors = vendors.filter(v => 
       v.isQualified && (!category || v.category.includes(category))
     )
     return qualifiedVendors.length > 0 
