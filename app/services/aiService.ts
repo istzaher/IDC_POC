@@ -104,12 +104,25 @@ export class AIValidationService {
     const fuse = new Fuse(mockMaterials, this.fuseOptions)
     const results = fuse.search(newMaterial.description || '')
     
-    return results.map(result => ({
-      material: result.item,
-      similarity: Math.round((1 - (result.score || 0)) * 100) / 100,
-      matchType: (result.score || 0) < 0.1 ? 'exact' : 
-                (result.score || 0) < 0.3 ? 'similar' : 'fuzzy'
-    })).filter(match => match.similarity > 0.7)
+    return results.map(result => {
+      const score = result.score || 0
+      const similarity = Math.round((1 - score) * 100) / 100
+      
+      let matchType: 'exact' | 'similar' | 'fuzzy'
+      if (score < 0.1) {
+        matchType = 'exact'
+      } else if (score < 0.3) {
+        matchType = 'similar'
+      } else {
+        matchType = 'fuzzy'
+      }
+      
+      return {
+        material: result.item,
+        similarity,
+        matchType
+      }
+    }).filter(match => match.similarity > 0.7)
   }
 
   // 2. Field Validation and Auto-Suggestion
