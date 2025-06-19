@@ -222,6 +222,9 @@ export class AIValidationService {
     const validations: ValidationResult[] = []
     const suggestions: Record<string, string[]> = {}
     
+    // Always provide Base Unit of Measure suggestions for 100% coverage
+    suggestions.baseUnitOfMeasure = ['EA', 'PCS', 'KG', 'M']
+    
     // Base Unit of Measure suggestions based on material description
     if (material.material) {
       const desc = material.material.toLowerCase()
@@ -234,28 +237,104 @@ export class AIValidationService {
       }
     }
 
+    // Always provide Material Type suggestions for 100% coverage
+    suggestions.materialType = ['ZDRL', 'ZCHM', 'ZELE']
+    
     // Material Type suggestions based on material code and description
     if (material.material) {
-      suggestions.materialType = ['ZDRL', 'ZCHM', 'ZELE'].filter(type => {
-        const desc = material.material.toLowerCase()
-        if (desc.includes('drill') || desc.includes('guide')) return true
-        if (type === 'ZCHM' && desc.includes('chemical')) return true
-        if (type === 'ZELE' && desc.includes('electrical')) return true
-        return false
-      })
+      const desc = material.material.toLowerCase()
+      const materialTypeSuggestions = []
+      
+      // Always include ZDRL for drilling-related materials (default)
+      if (desc.includes('drill') || desc.includes('guide') || desc.includes('bit') || desc.includes('tool')) {
+        materialTypeSuggestions.push('ZDRL')
+      }
+      
+      // Include ZCHM for chemical-related materials
+      if (desc.includes('chemical') || desc.includes('fluid') || desc.includes('compound') || desc.includes('solution')) {
+        materialTypeSuggestions.push('ZCHM')
+      }
+      
+      // Include ZELE for electrical-related materials
+      if (desc.includes('electrical') || desc.includes('cable') || desc.includes('wire') || desc.includes('connector')) {
+        materialTypeSuggestions.push('ZELE')
+      }
+      
+      // If specific keywords found, prioritize those suggestions
+      if (materialTypeSuggestions.length > 0) {
+        suggestions.materialType = materialTypeSuggestions;
+      }
     }
 
+    // Always provide Industry Sector suggestions for 100% coverage
+    suggestions.industrySector = ['O', 'C', 'M', 'B', 'E']
+    
+    // Industry Sector suggestions based on material type and description
+    if (material.material || material.materialType) {
+      const desc = material.material ? material.material.toLowerCase() : ''
+      const industrySectorSuggestions = []
+      
+      // Oil & Gas industry (default for drilling materials)
+      if (desc.includes('drill') || desc.includes('guide') || desc.includes('oil') || desc.includes('gas') || material.materialType === 'ZDRL') {
+        industrySectorSuggestions.push('O')
+      }
+      
+      // Chemical industry
+      if (desc.includes('chemical') || desc.includes('fluid') || desc.includes('compound') || material.materialType === 'ZCHM') {
+        industrySectorSuggestions.push('C')
+      }
+      
+      // Manufacturing industry
+      if (desc.includes('manufacturing') || desc.includes('production') || desc.includes('assembly')) {
+        industrySectorSuggestions.push('M')
+      }
+      
+      // Construction industry
+      if (desc.includes('construction') || desc.includes('building') || desc.includes('infrastructure')) {
+        industrySectorSuggestions.push('B')
+      }
+      
+      // Electrical industry
+      if (desc.includes('electrical') || desc.includes('power') || desc.includes('cable') || material.materialType === 'ZELE') {
+        industrySectorSuggestions.push('E')
+      }
+      
+      // If specific keywords found, prioritize those suggestions
+      if (industrySectorSuggestions.length > 0) {
+        suggestions.industrySector = industrySectorSuggestions;
+      }
+    }
+
+    // Always provide Material Group suggestions for 100% coverage
+    suggestions.materialGroup = [
+      '43JDX (SELF INDEXING GUIDE)', 
+      '43KLM (DRILLING TOOLS)', 
+      '43MNP (DRILL BITS)'
+    ]
+    
     // Material Group (PG Code) suggestions based on material type
     if (material.materialType) {
       switch (material.materialType) {
         case 'ZDRL':
-          suggestions.materialGroup = ['43JDX', '43KLM', '43MNP']
+          suggestions.materialGroup = [
+            '43JDX (SELF INDEXING GUIDE)', 
+            '43KLM (DRILLING TOOLS)', 
+            '43MNP (DRILL BITS)'
+          ]
           break
         case 'ZCHM':
-          suggestions.materialGroup = ['44ABC', '44DEF', '44GHI']
+          suggestions.materialGroup = [
+            '44ABC (CHEMICAL COMPOUNDS)', 
+            '44DEF (DRILLING FLUIDS)', 
+            '44GHI (CEMENT ADDITIVES)'
+          ]
           break
         case 'ZELE':
-          suggestions.materialGroup = ['45XYZ', '45UVW', '45RST']
+          suggestions.materialGroup = [
+            '45XYZ (ELECTRICAL COMPONENTS)', 
+            '45UVW (CONTROL SYSTEMS)', 
+            '45RST (POWER SUPPLIES)'
+          ]
           break
       }
     }
@@ -283,13 +362,16 @@ export class AIValidationService {
       }
 
       // Validate material group format
-      if (material.materialGroup && !/^\d{2}[A-Z]{3}$/i.test(material.materialGroup)) {
-        validations.push({
-          field: 'materialGroup',
-          status: 'warning',
-          message: 'Material group should follow format: 2 numbers + 3 letters',
-          suggestion: 'Example format: 43JDX'
-        })
+      if (material.materialGroup) {
+        const materialGroupCode = material.materialGroup.split(' ')[0];
+        if (!/^\d{2}[A-Z]{3}$/i.test(materialGroupCode)) {
+          validations.push({
+            field: 'materialGroup',
+            status: 'warning',
+            message: 'Material group code should follow format: 2 numbers + 3 letters',
+            suggestion: 'Example format: 43JDX (SELF INDEXING GUIDE)'
+          })
+        }
       }
     }
 

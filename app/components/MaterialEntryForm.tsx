@@ -10,10 +10,11 @@ import toast from 'react-hot-toast'
 export function MaterialEntryForm() {
   const [formData, setFormData] = useState({
     material: '',
-    baseUnitOfMeasure: 'EA',
-    materialType: 'ZDRL',
-    industrySector: 'O',
-    materialGroup: '43JDX',
+    materialDescription: '',
+    baseUnitOfMeasure: '',
+    materialType: '',
+    industrySector: '',
+    materialGroup: '',
     oldMaterialNumber: '',
     crossReferenceMaterial: '',
     crossPlantMaterialStatus: '',
@@ -72,6 +73,22 @@ export function MaterialEntryForm() {
     
     if (!formData.material?.trim()) {
       errors.material = 'Material is required'
+    }
+    
+    if (!formData.materialDescription?.trim()) {
+      errors.materialDescription = 'Material Description is required'
+    }
+    
+    if (!formData.baseUnitOfMeasure) {
+      errors.baseUnitOfMeasure = 'Base Unit of Measure is required'
+    }
+    
+    if (!formData.materialType) {
+      errors.materialType = 'Material Type is required'
+    }
+    
+    if (!formData.materialGroup) {
+      errors.materialGroup = 'Material Group is required'
     }
     
     setFormErrors(errors)
@@ -141,235 +158,397 @@ export function MaterialEntryForm() {
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-[200px,1fr] gap-4 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Material */}
-          <label className="text-sm font-medium text-gray-700">Material:</label>
-          <div className="flex gap-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Material:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.material}
+                onChange={(e) => handleInputChange('material', e.target.value)}
+                className="sap-input flex-1"
+                placeholder="S1566153"
+              />
+              <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="mt-1">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-xs font-medium text-blue-600">DEMO MATERIALS</p>
+                <div className="h-px flex-1 bg-blue-100"></div>
+              </div>
+              <p className="text-xs text-gray-500 mb-1">Click any example below to populate the form:</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { code: 'STL001', desc: 'Steel Rod 10mm', type: 'ZDRL', sector: 'O' },
+                  { code: 'CEM001', desc: 'Portland Cement 50kg', type: 'ZCHM', sector: 'C' },
+                  { code: 'PIP001', desc: 'PVC Pipe 6 inch', type: 'ZELE', sector: 'M' },
+                  { code: 'ELE001', desc: 'Electrical Cable 2.5mm', type: 'ZELE', sector: 'E' },
+                  { code: 'DRL101', desc: 'Drill Bit 12mm', type: 'ZDRL', sector: 'O' },
+                  { code: 'CHM203', desc: 'Chemical Additive X40', type: 'ZCHM', sector: 'C' }
+                ].map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => {
+                      handleInputChange('material', item.code);
+                      handleInputChange('materialDescription', item.desc);
+                      // Also set material type and industry sector for better demo experience
+                      if (item.type) {
+                        handleInputChange('materialType', item.type);
+                      }
+                      if (item.sector) {
+                        handleInputChange('industrySector', item.sector);
+                      }
+                      // Auto select material group based on material type
+                      if (item.type === 'ZDRL') {
+                        handleInputChange('materialGroup', '43KLM (DRILLING TOOLS)');
+                      } else if (item.type === 'ZCHM') {
+                        handleInputChange('materialGroup', '44ABC (CHEMICAL COMPOUNDS)');
+                      } else if (item.type === 'ZELE') {
+                        handleInputChange('materialGroup', '45XYZ (ELECTRICAL COMPONENTS)');
+                      }
+                      // Base unit of measure suggestions
+                      if (item.desc.includes('Rod') || item.desc.includes('Pipe')) {
+                        handleInputChange('baseUnitOfMeasure', 'M');
+                      } else if (item.desc.includes('Bit') || item.desc.includes('Cable')) {
+                        handleInputChange('baseUnitOfMeasure', 'EA');
+                      } else if (item.desc.includes('Cement') || item.desc.includes('Chemical')) {
+                        handleInputChange('baseUnitOfMeasure', 'KG');
+                      }
+                    }}
+                    className={`px-2 py-1 border rounded text-xs flex items-center gap-1 hover:bg-gray-50 
+                      ${item.type === 'ZDRL' ? 'bg-blue-50 border-blue-200' : 
+                        item.type === 'ZCHM' ? 'bg-green-50 border-green-200' : 
+                        'bg-amber-50 border-amber-200'}`}
+                    title={`${item.desc} (Type: ${item.type})`}
+                  >
+                    <span className="font-mono font-medium">{item.code}</span>
+                    <span className="text-gray-500 hidden sm:inline">-</span>
+                    <span className="text-gray-600 hidden sm:inline truncate max-w-[80px]">{item.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Material Description */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Material Description:*</label>
             <input
               type="text"
-              value={formData.material}
-              onChange={(e) => handleInputChange('material', e.target.value)}
-              className="sap-input flex-1"
-              placeholder="S1566153"
+              value={formData.materialDescription}
+              onChange={(e) => handleInputChange('materialDescription', e.target.value)}
+              className={getInputClassName('materialDescription')}
+              placeholder="Enter material description"
             />
-            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              <Search className="w-4 h-4" />
-            </button>
+            {getFormErrorMessage('materialDescription') && (
+              <p className="text-red-500 text-sm">{getFormErrorMessage('materialDescription')}</p>
+            )}
           </div>
 
           {/* Base Unit of Measure */}
-          <label className="text-sm font-medium text-gray-700">Base Unit of Measure:*</label>
-          <div className="flex gap-2 relative">
-            <select
-              value={formData.baseUnitOfMeasure}
-              onChange={(e) => handleInputChange('baseUnitOfMeasure', e.target.value)}
-              className="sap-input w-24"
-            >
-              <option value="EA">EA</option>
-              <option value="PCS">PCS</option>
-              <option value="KG">KG</option>
-              <option value="M">M</option>
-            </select>
-            <span className="py-2 text-gray-600">each</span>
-            {analysis?.suggestions?.baseUnitOfMeasure && (
-              <button
-                type="button"
-                onClick={() => setShowSuggestions(prev => ({ ...prev, baseUnitOfMeasure: !prev.baseUnitOfMeasure }))}
-                className="absolute right-20 top-2 text-blue-600 hover:text-blue-700"
-                title="AI Suggestions Available"
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Base Unit of Measure:*</label>
+            <div className="flex gap-2 relative">
+              <select
+                value={formData.baseUnitOfMeasure}
+                onChange={(e) => handleInputChange('baseUnitOfMeasure', e.target.value)}
+                className="sap-input w-full"
               >
-                <Lightbulb className="w-4 h-4" />
-              </button>
+                <option value="">Select</option>
+                <option value="EA">EA (each)</option>
+                <option value="PCS">PCS (pieces)</option>
+                <option value="KG">KG (kilogram)</option>
+                <option value="M">M (meter)</option>
+              </select>
+              {analysis?.suggestions?.baseUnitOfMeasure && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions(prev => ({ ...prev, baseUnitOfMeasure: !prev.baseUnitOfMeasure }))}
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  title="AI Suggestions Available"
+                >
+                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                </button>
+              )}
+            </div>
+            {showSuggestions.baseUnitOfMeasure && analysis?.suggestions?.baseUnitOfMeasure && (
+              <div>
+                <SuggestionsList
+                  suggestions={analysis.suggestions.baseUnitOfMeasure}
+                  onApply={(suggestion) => applySuggestion('baseUnitOfMeasure', suggestion)}
+                />
+              </div>
             )}
           </div>
-          {showSuggestions.baseUnitOfMeasure && analysis?.suggestions?.baseUnitOfMeasure && (
-            <div className="col-start-2">
-              <SuggestionsList
-                suggestions={analysis.suggestions.baseUnitOfMeasure}
-                onApply={(suggestion) => applySuggestion('baseUnitOfMeasure', suggestion)}
-              />
-            </div>
-          )}
 
           {/* Material Type */}
-          <label className="text-sm font-medium text-gray-700">Material Type:*</label>
-          <div className="flex gap-2 relative">
-            <select
-              value={formData.materialType}
-              onChange={(e) => handleInputChange('materialType', e.target.value)}
-              className="sap-input w-24"
-            >
-              <option value="ZDRL">ZDRL</option>
-            </select>
-            <span className="py-2 text-gray-600">Drilling Materials</span>
-            {analysis?.suggestions?.materialType && (
-              <button
-                type="button"
-                onClick={() => setShowSuggestions(prev => ({ ...prev, materialType: !prev.materialType }))}
-                className="absolute right-20 top-2 text-blue-600 hover:text-blue-700"
-                title="AI Suggestions Available"
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Material Type:*</label>
+            <div className="flex gap-2 relative">
+              <select
+                value={formData.materialType}
+                onChange={(e) => handleInputChange('materialType', e.target.value)}
+                className="sap-input w-full"
               >
-                <Lightbulb className="w-4 h-4" />
-              </button>
+                <option value="">Select</option>
+                <option value="ZDRL">ZDRL (Drilling Materials)</option>
+                <option value="ZCHM">ZCHM (Chemical Materials)</option>
+                <option value="ZELE">ZELE (Electrical Materials)</option>
+              </select>
+              {analysis?.suggestions?.materialType && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions(prev => ({ ...prev, materialType: !prev.materialType }))}
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  title="AI Suggestions Available"
+                >
+                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                </button>
+              )}
+            </div>
+            {showSuggestions.materialType && analysis?.suggestions?.materialType && (
+              <div>
+                <SuggestionsList
+                  suggestions={analysis.suggestions.materialType}
+                  onApply={(suggestion) => applySuggestion('materialType', suggestion)}
+                />
+              </div>
             )}
           </div>
-          {showSuggestions.materialType && analysis?.suggestions?.materialType && (
-            <div className="col-start-2">
-              <SuggestionsList
-                suggestions={analysis.suggestions.materialType}
-                onApply={(suggestion) => applySuggestion('materialType', suggestion)}
-              />
-            </div>
-          )}
 
           {/* Industry Sector */}
-          <label className="text-sm font-medium text-gray-700">Industry Sector:</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formData.industrySector}
-              onChange={(e) => handleInputChange('industrySector', e.target.value)}
-              className="sap-input w-24"
-              readOnly
-            />
-            <span className="py-2 text-gray-600">Oil Industry</span>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Industry Sector:</label>
+            <div className="flex gap-2 relative">
+              <select
+                value={formData.industrySector}
+                onChange={(e) => handleInputChange('industrySector', e.target.value)}
+                className="sap-input w-full"
+              >
+                <option value=""> Select</option>
+                <option value="O">O (Oil & Gas Industry)</option>
+                <option value="C">C (Chemical Industry)</option>
+                <option value="M">M (Manufacturing Industry)</option>
+                <option value="B">B (Construction Industry)</option>
+                <option value="E">E (Electrical Industry)</option>
+              </select>
+              {analysis?.suggestions?.industrySector && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions(prev => ({ ...prev, industrySector: !prev.industrySector }))}
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  title="AI Suggestions Available"
+                >
+                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                </button>
+              )}
+            </div>
+            {showSuggestions.industrySector && analysis?.suggestions?.industrySector && (
+              <div>
+                <SuggestionsList
+                  suggestions={analysis.suggestions.industrySector}
+                  onApply={(suggestion) => applySuggestion('industrySector', suggestion)}
+                />
+              </div>
+            )}
           </div>
 
           {/* Material Group */}
-          <label className="text-sm font-medium text-gray-700">Material Group:*</label>
-          <div className="flex gap-2 relative">
-            <input
-              type="text"
-              value={formData.materialGroup}
-              onChange={(e) => handleInputChange('materialGroup', e.target.value)}
-              className="sap-input w-24"
-            />
-            <span className="py-2 text-gray-600">SELF INDEXING GUIDE</span>
-            {analysis?.suggestions?.materialGroup && (
-              <button
-                type="button"
-                onClick={() => setShowSuggestions(prev => ({ ...prev, materialGroup: !prev.materialGroup }))}
-                className="absolute right-20 top-2 text-blue-600 hover:text-blue-700"
-                title="AI Suggestions Available"
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Material Group:*</label>
+            <div className="flex gap-2 relative">
+              <select
+                value={formData.materialGroup}
+                onChange={(e) => handleInputChange('materialGroup', e.target.value)}
+                className="sap-input w-full"
               >
-                <Lightbulb className="w-4 h-4" />
-              </button>
+                <option value="">Select</option>
+                {formData.materialType === 'ZDRL' && (
+                  <>
+                    <option value="43JDX (SELF INDEXING GUIDE)">43JDX (SELF INDEXING GUIDE)</option>
+                    <option value="43KLM (DRILLING TOOLS)">43KLM (DRILLING TOOLS)</option>
+                    <option value="43MNP (DRILL BITS)">43MNP (DRILL BITS)</option>
+                  </>
+                )}
+                {formData.materialType === 'ZCHM' && (
+                  <>
+                    <option value="44ABC (CHEMICAL COMPOUNDS)">44ABC (CHEMICAL COMPOUNDS)</option>
+                    <option value="44DEF (DRILLING FLUIDS)">44DEF (DRILLING FLUIDS)</option>
+                    <option value="44GHI (CEMENT ADDITIVES)">44GHI (CEMENT ADDITIVES)</option>
+                  </>
+                )}
+                {formData.materialType === 'ZELE' && (
+                  <>
+                    <option value="45XYZ (ELECTRICAL COMPONENTS)">45XYZ (ELECTRICAL COMPONENTS)</option>
+                    <option value="45UVW (CONTROL SYSTEMS)">45UVW (CONTROL SYSTEMS)</option>
+                    <option value="45RST (POWER SUPPLIES)">45RST (POWER SUPPLIES)</option>
+                  </>
+                )}
+              </select>
+              {analysis?.suggestions?.materialGroup && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions(prev => ({ ...prev, materialGroup: !prev.materialGroup }))}
+                  className="absolute right-10 top-2 text-amber-500 hover:text-amber-600 drop-shadow-sm"
+                  title="AI Suggestions Available"
+                >
+                  <Lightbulb className="w-4 h-4 animate-pulse" />
+                </button>
+              )}
+            </div>
+            {showSuggestions.materialGroup && analysis?.suggestions?.materialGroup && (
+              <div>
+                <SuggestionsList
+                  suggestions={analysis.suggestions.materialGroup}
+                  onApply={(suggestion) => applySuggestion('materialGroup', suggestion)}
+                />
+              </div>
             )}
           </div>
-          {showSuggestions.materialGroup && analysis?.suggestions?.materialGroup && (
-            <div className="col-start-2">
-              <SuggestionsList
-                suggestions={analysis.suggestions.materialGroup}
-                onApply={(suggestion) => applySuggestion('materialGroup', suggestion)}
-              />
-            </div>
-          )}
 
           {/* Old Material Number */}
-          <label className="text-sm font-medium text-gray-700">Old Material Number:</label>
-          <input
-            type="text"
-            value={formData.oldMaterialNumber}
-            onChange={(e) => handleInputChange('oldMaterialNumber', e.target.value)}
-            className={getInputClassName('oldMaterialNumber')}
-          />
-
-          {/* Cross Reference Material */}
-          <label className="text-sm font-medium text-gray-700">Cross Reference Material:</label>
-          <div className="flex gap-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Old Material Number:</label>
             <input
               type="text"
-              value={formData.crossReferenceMaterial}
-              onChange={(e) => handleInputChange('crossReferenceMaterial', e.target.value)}
-              className={getInputClassName('crossReferenceMaterial')}
-              placeholder="Old Material Number"
+              value={formData.oldMaterialNumber}
+              onChange={(e) => handleInputChange('oldMaterialNumber', e.target.value)}
+              className={getInputClassName('oldMaterialNumber')}
             />
-            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              <Search className="w-4 h-4" />
-            </button>
+          </div>
+
+          {/* Cross Reference Material */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Cross Reference Material:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.crossReferenceMaterial}
+                onChange={(e) => handleInputChange('crossReferenceMaterial', e.target.value)}
+                className={getInputClassName('crossReferenceMaterial')}
+                placeholder="Old Material Number"
+              />
+              <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Cross-Plant Material Status */}
-          <label className="text-sm font-medium text-gray-700">Cross-Plant Material Status:</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formData.crossPlantMaterialStatus}
-              onChange={(e) => handleInputChange('crossPlantMaterialStatus', e.target.value)}
-              className={getInputClassName('crossPlantMaterialStatus')}
-            />
-            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              <Search className="w-4 h-4" />
-            </button>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Cross-Plant Material Status:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.crossPlantMaterialStatus}
+                onChange={(e) => handleInputChange('crossPlantMaterialStatus', e.target.value)}
+                className={getInputClassName('crossPlantMaterialStatus')}
+              />
+              <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Common material flag */}
-          <label className="text-sm font-medium text-gray-700">Common material flag:</label>
-          <input
-            type="checkbox"
-            checked={formData.commonMaterialFlag}
-            onChange={(e) => handleInputChange('commonMaterialFlag', e.target.checked)}
-            className={getInputClassName('commonMaterialFlag')}
-          />
-
-          {/* Batch Management */}
-          <label className="text-sm font-medium text-gray-700">Batch Management:</label>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3 py-2">
             <input
-              type="text"
-              value={formData.batchManagement}
-              onChange={(e) => handleInputChange('batchManagement', e.target.value)}
-              className={getInputClassName('batchManagement')}
-              readOnly
+              type="checkbox"
+              id="commonMaterialFlag"
+              checked={formData.commonMaterialFlag}
+              onChange={(e) => handleInputChange('commonMaterialFlag', e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-          </div>
-
-          {/* Serialization Level */}
-          <label className="text-sm font-medium text-gray-700">Serialization Level:</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formData.serializationLevel}
-              onChange={(e) => handleInputChange('serializationLevel', e.target.value)}
-              className={getInputClassName('serializationLevel')}
-              readOnly
-            />
-          </div>
-
-          {/* Approved Batch Record Required Indicator */}
-          <label className="text-sm font-medium text-gray-700">Approved Batch Record Required Indicator:</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formData.approvedBatchRecordRequired}
-              onChange={(e) => handleInputChange('approvedBatchRecordRequired', e.target.value)}
-              className={getInputClassName('approvedBatchRecordRequired')}
-              readOnly
-            />
-          </div>
-
-          {/* Division */}
-          <label className="text-sm font-medium text-gray-700">Division:</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formData.division}
-              onChange={(e) => handleInputChange('division', e.target.value)}
-              className={getInputClassName('division')}
-            />
-            <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              <Search className="w-4 h-4" />
-            </button>
+            <label className="text-sm font-medium text-gray-700" htmlFor="commonMaterialFlag">
+              Common material flag
+            </label>
           </div>
 
           {/* Catalog Enabled */}
-          <label className="text-sm font-medium text-gray-700">Catalog Enabled:</label>
-          <input
-            type="checkbox"
-            checked={formData.catalogEnabled}
-            onChange={(e) => handleInputChange('catalogEnabled', e.target.checked)}
-            className={getInputClassName('catalogEnabled')}
-          />
+          <div className="flex items-center gap-3 py-2">
+            <input
+              type="checkbox"
+              id="catalogEnabled"
+              checked={formData.catalogEnabled}
+              onChange={(e) => handleInputChange('catalogEnabled', e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label className="text-sm font-medium text-gray-700" htmlFor="catalogEnabled">
+              Catalog Enabled
+            </label>
+          </div>
+
+          {/* Division */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Division:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.division}
+                onChange={(e) => handleInputChange('division', e.target.value)}
+                className={getInputClassName('division')}
+              />
+              <button type="button" className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Batch Management */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Batch Management:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.batchManagement}
+                onChange={(e) => handleInputChange('batchManagement', e.target.value)}
+                className={getInputClassName('batchManagement')}
+                readOnly
+              />
+            </div>
+          </div>
+
+          {/* Serialization Level */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Serialization Level:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.serializationLevel}
+                onChange={(e) => handleInputChange('serializationLevel', e.target.value)}
+                className={getInputClassName('serializationLevel')}
+                readOnly
+              />
+            </div>
+          </div>
+
+          {/* Approved Batch Record Required Indicator */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Approved Batch Record Required:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.approvedBatchRecordRequired}
+                onChange={(e) => handleInputChange('approvedBatchRecordRequired', e.target.value)}
+                className={getInputClassName('approvedBatchRecordRequired')}
+                readOnly
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-end mt-6">
+          <button 
+            type="submit" 
+            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Save Material
+          </button>
         </div>
 
         {/* Error Messages */}
