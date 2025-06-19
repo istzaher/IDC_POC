@@ -22,10 +22,13 @@ The client faces critical data entry and validation issues when processing "crea
 - **Example**: Detects "Steel Rod 10mm" and "10mm Steel Rod" as potential duplicates
 
 ### 2. AI-Powered Field Auto-Suggestion
-- **Technology**: GPT-based models, classification algorithms, contextual analysis
-- **Accuracy**: 96.3%
-- **Features**: Intelligent field completion based on context and historical data
-- **Example**: Suggests "ROD" as material type when description contains "steel rod"
+- **Technology**: OpenAI GPT integration with fallback to keyword-based matching
+- **Features**: 
+  - Real-time intelligent field completion based on context
+  - OpenAI API for accurate suggestions (requires API key)
+  - Fallback to local pattern matching when API key not available
+- **Example**: Suggests "ZDRL" as material type when description contains "drill bit"
+- **Setup**: Add your OpenAI API key to `.env.local` file for full AI capabilities
 
 ### 3. Knowledge Graph for Vendor-Manufacturer Relationships
 - **Technology**: Graph embeddings, entity linking, relationship mining
@@ -95,12 +98,21 @@ The client faces critical data entry and validation issues when processing "crea
    npm install
    ```
 
-3. **Run the development server**
+3. **Set up OpenAI API key (for AI-powered suggestions)**
+   ```bash
+   # Create or edit .env.local file
+   echo "OPENAI_API_KEY=your_openai_api_key_here" > .env.local
+   
+   # Replace with your actual API key from https://platform.openai.com/api-keys
+   ```
+   Note: If you skip this step, the system will fall back to local pattern matching for suggestions.
+
+4. **Run the development server**
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to `http://localhost:3000`
 
 ## 🎮 How to Use the PoC
@@ -174,10 +186,10 @@ Result: AI suggests Material Type: "PIPE", Unit: "M"
 ## 🔧 Technical Implementation
 
 ### AI Components
-- **NLP Engine**: Semantic understanding and similarity matching
-- **ML Models**: Predictive field completion and validation
-- **Knowledge Graph**: Relationship mapping and validation
-- **Rule Engine**: Business logic enforcement and compliance
+- **OpenAI Integration**: GPT-powered field suggestions with contextual understanding
+- **Fuzzy Matching**: Similarity detection for duplicate materials using Fuse.js
+- **Pattern Recognition**: Fallback keyword matching for offline operation
+- **Rule Engine**: Business logic enforcement and compliance validation
 
 ### Integration Points
 - Real-time validation during data entry

@@ -34,7 +34,11 @@ export function MaterialEntryForm() {
   // Real-time analysis when form data changes
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      if (formData.material && formData.material.length > 3) {
+      // Trigger analysis when we have either material code or material description
+      const hasContent = (formData.material && formData.material.length > 2) || 
+                        (formData.materialDescription && formData.materialDescription.length > 3)
+      
+      if (hasContent) {
         setIsAnalyzing(true)
         try {
           const result = await aiService.analyzeEntry(formData)
@@ -44,6 +48,9 @@ export function MaterialEntryForm() {
         } finally {
           setIsAnalyzing(false)
         }
+      } else {
+        // Clear analysis if no content
+        setAnalysis(null)
       }
     }, 500)
 

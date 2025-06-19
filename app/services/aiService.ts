@@ -146,19 +146,39 @@ export class AIValidationService {
     }
   }
 
-  // 4. AI Auto-Suggestion for Fields
+  // 4. AI Auto-Suggestion for Fields using API routes
   async getSuggestions(field: string, context: Partial<Material>): Promise<string[]> {
-    switch (field) {
-      case 'materialType':
-        return this.suggestMaterialType(context.description || '')
-      case 'unitOfMeasure':
-        return this.suggestUnitOfMeasure(context.materialType || '')
-      case 'category':
-        return this.suggestCategory(context.description || '')
-      case 'vendorId':
-        return this.suggestVendors(context.category || '')
-      default:
-        return []
+    try {
+      const response = await fetch('/api/ai/suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ field, context }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.suggestions || []
+    } catch (error) {
+      console.error('Error calling AI suggestions API:', error)
+      
+      // Fall back to local logic if API call fails
+      switch (field) {
+        case 'materialType':
+          return this.suggestMaterialType(context.description || '')
+        case 'unitOfMeasure':
+          return this.suggestUnitOfMeasure(context.materialType || '')
+        case 'category':
+          return this.suggestCategory(context.description || '')
+        case 'vendorId':
+          return this.suggestVendors(context.category || '')
+        default:
+          return []
+      }
     }
   }
 
@@ -217,16 +237,41 @@ export class AIValidationService {
       : 'Select a qualified vendor (200xxx series)'
   }
 
-  // Complete AI Analysis
+  // Complete AI Analysis using API route
   async analyzeEntry(material: any): Promise<AIAnalysis> {
+    try {
+      const response = await fetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(material),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error calling AI analysis API:', error)
+      
+      // Fall back to local analysis logic
+      return this.fallbackAnalysis(material)
+    }
+  }
+
+  // Fallback analysis when API is not available
+  private fallbackAnalysis(material: any): AIAnalysis {
     const validations: ValidationResult[] = []
     const suggestions: Record<string, string[]> = {}
     
-    // Get material description (either from materialDescription field or material field)
+    // Get material description
     const materialDesc = (material.materialDescription || material.material || '').toLowerCase()
     const materialCode = (material.material || '').toLowerCase()
     
-    // Base Unit of Measure suggestions - limit to 1-2 most relevant
+    // Base Unit of Measure suggestions
     if (materialDesc.includes('rod') || materialDesc.includes('pipe')) {
       suggestions.baseUnitOfMeasure = ['M', 'FT']
     } else if (materialDesc.includes('bit') || materialDesc.includes('tool') || materialDesc.includes('guide')) {
@@ -236,56 +281,53 @@ export class AIValidationService {
     } else if (materialDesc.includes('cable') || materialDesc.includes('electrical')) {
       suggestions.baseUnitOfMeasure = ['M', 'EA']
     } else {
-      // Default suggestions
       suggestions.baseUnitOfMeasure = ['EA', 'PCS']
     }
     
-    // Material Type suggestions - limit to 1-2 most relevant
+    // Material Type suggestions
     if (materialDesc.includes('drill') || materialDesc.includes('bit') || materialDesc.includes('guide') || 
         materialDesc.includes('tool') || materialCode.startsWith('drl') || materialCode.startsWith('stl')) {
       suggestions.materialType = ['ZDRL']
     } else if (materialDesc.includes('chemical') || materialDesc.includes('cement') || 
-               materialDesc.includes('fluid') || materialDesc.includes('additive') || 
-               materialCode.startsWith('chm') || materialCode.startsWith('cem')) {
+              materialDesc.includes('fluid') || materialDesc.includes('additive') || 
+              materialCode.startsWith('chm') || materialCode.startsWith('cem')) {
       suggestions.materialType = ['ZCHM']
     } else if (materialDesc.includes('electrical') || materialDesc.includes('cable') || 
-               materialDesc.includes('wire') || materialDesc.includes('connector') || 
-               materialCode.startsWith('ele') || materialCode.startsWith('pip')) {
+              materialDesc.includes('wire') || materialDesc.includes('connector') || 
+              materialCode.startsWith('ele') || materialCode.startsWith('pip')) {
       suggestions.materialType = ['ZELE']
     } else {
-      // If no specific match, provide 2 most likely options based on common patterns
       suggestions.materialType = ['ZDRL', 'ZCHM']
     }
     
-    // Industry Sector suggestions - limit to 1-2 most relevant based on material type and description
+    // Industry Sector suggestions
     if (material.materialType === 'ZDRL' || materialDesc.includes('drill') || 
         materialDesc.includes('bit') || materialDesc.includes('oil') || materialDesc.includes('gas')) {
-      suggestions.industrySector = ['O'] // Oil & Gas
+      suggestions.industrySector = ['O']
     } else if (material.materialType === 'ZCHM' || materialDesc.includes('chemical') || 
-               materialDesc.includes('cement') || materialDesc.includes('additive')) {
-      suggestions.industrySector = ['C'] // Chemical
+              materialDesc.includes('cement') || materialDesc.includes('additive')) {
+      suggestions.industrySector = ['C']
     } else if (material.materialType === 'ZELE' || materialDesc.includes('electrical') || 
-               materialDesc.includes('cable') || materialDesc.includes('power')) {
-      suggestions.industrySector = ['E'] // Electrical
+              materialDesc.includes('cable') || materialDesc.includes('power')) {
+      suggestions.industrySector = ['E']
     } else if (materialDesc.includes('pipe') || materialDesc.includes('manufacturing') || 
-               materialDesc.includes('production')) {
-      suggestions.industrySector = ['M'] // Manufacturing
+              materialDesc.includes('production')) {
+      suggestions.industrySector = ['M']
     } else if (materialDesc.includes('construction') || materialDesc.includes('building')) {
-      suggestions.industrySector = ['B'] // Construction
+      suggestions.industrySector = ['B']
     } else {
-      // Default based on material type or general use
       if (material.materialType === 'ZDRL') {
-        suggestions.industrySector = ['O'] // Oil & Gas
+        suggestions.industrySector = ['O']
       } else if (material.materialType === 'ZCHM') {
-        suggestions.industrySector = ['C'] // Chemical
+        suggestions.industrySector = ['C']
       } else if (material.materialType === 'ZELE') {
-        suggestions.industrySector = ['E'] // Electrical
+        suggestions.industrySector = ['E']
       } else {
-        suggestions.industrySector = ['O', 'M'] // Default to Oil & Gas and Manufacturing
+        suggestions.industrySector = ['O', 'M']
       }
     }
     
-    // Material Group suggestions - provide 1-2 most relevant based on material type and description
+    // Material Group suggestions
     if (material.materialType === 'ZDRL') {
       if (materialDesc.includes('bit')) {
         suggestions.materialGroup = ['43MNP (DRILL BITS)']
@@ -311,7 +353,6 @@ export class AIValidationService {
         suggestions.materialGroup = ['45XYZ (ELECTRICAL COMPONENTS)']
       }
     } else {
-      // Default suggestions based on material description
       if (materialDesc.includes('drill') || materialDesc.includes('bit')) {
         suggestions.materialGroup = ['43MNP (DRILL BITS)', '43KLM (DRILLING TOOLS)']
       } else if (materialDesc.includes('chemical') || materialDesc.includes('additive')) {
@@ -319,14 +360,12 @@ export class AIValidationService {
       } else if (materialDesc.includes('electrical') || materialDesc.includes('cable')) {
         suggestions.materialGroup = ['45XYZ (ELECTRICAL COMPONENTS)', '45RST (POWER SUPPLIES)']
       } else {
-        // Generic fallback
         suggestions.materialGroup = ['43KLM (DRILLING TOOLS)', '44ABC (CHEMICAL COMPOUNDS)']
       }
     }
 
     // Add validations
     if (material.material) {
-      // Validate material code format
       if (!/^[A-Z0-9]{8}$/i.test(material.material)) {
         validations.push({
           field: 'material',
@@ -336,7 +375,6 @@ export class AIValidationService {
         })
       }
 
-      // Validate material type selection
       if (material.materialType && suggestions.materialType?.length && !suggestions.materialType.includes(material.materialType)) {
         validations.push({
           field: 'materialType',
@@ -346,9 +384,8 @@ export class AIValidationService {
         })
       }
 
-      // Validate material group format
       if (material.materialGroup) {
-        const materialGroupCode = material.materialGroup.split(' ')[0];
+        const materialGroupCode = material.materialGroup.split(' ')[0]
         if (!/^\d{2}[A-Z]{3}$/i.test(materialGroupCode)) {
           validations.push({
             field: 'materialGroup',
@@ -360,11 +397,8 @@ export class AIValidationService {
       }
     }
 
-    // Calculate risk score based on validations
     const riskScore = this.calculateRiskScore(validations)
-
-    // Find potential duplicates
-    const duplicates = await this.detectDuplicates(material)
+    const duplicates: DuplicateMatch[] = []
 
     return {
       suggestions,
