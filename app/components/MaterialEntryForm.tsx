@@ -22,6 +22,7 @@ export function MaterialEntryForm() {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState<Record<string, boolean>>({})
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   // Real-time analysis when form data changes
   useEffect(() => {
@@ -44,12 +45,46 @@ export function MaterialEntryForm() {
 
   const handleInputChange = (field: keyof Material, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
   }
 
   const applySuggestion = (field: string, suggestion: string) => {
     handleInputChange(field as keyof Material, suggestion)
     setShowSuggestions(prev => ({ ...prev, [field]: false }))
     toast.success(`Applied AI suggestion for ${field}`)
+  }
+
+  const validateRequiredFields = (): boolean => {
+    const errors: Record<string, string> = {}
+    
+    // Required fields validation
+    if (!formData.materialCode?.trim()) {
+      errors.materialCode = 'Material Code is required'
+    }
+    
+    if (!formData.description?.trim()) {
+      errors.description = 'Material Description is required'
+    }
+    
+    if (!formData.vendorId?.trim()) {
+      errors.vendorId = 'Vendor ID is required'
+    }
+
+    // Additional validation for plant code
+    if (!formData.plantCode?.trim()) {
+      errors.plantCode = 'Plant Code is required'
+    }
+    
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const getValidationStatus = (field: string) => {
@@ -63,11 +98,22 @@ export function MaterialEntryForm() {
     return analysis.validations.find(v => v.field === field)
   }
 
+  const getFormErrorMessage = (field: string) => {
+    return formErrors[field] || null
+  }
+
   const getInputClassName = (field: string) => {
-    const status = getValidationStatus(field)
+    const aiStatus = getValidationStatus(field)
+    const hasFormError = formErrors[field]
     const baseClass = 'sap-input w-full'
     
-    switch (status) {
+    // Form validation errors take precedence
+    if (hasFormError) {
+      return `${baseClass} validation-error`
+    }
+    
+    // Then AI validation status
+    switch (aiStatus) {
       case 'error':
         return `${baseClass} validation-error`
       case 'warning':
@@ -81,10 +127,26 @@ export function MaterialEntryForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // First validate required fields
+    if (!validateRequiredFields()) {
+      toast.error('Please fill in all required fields marked with *')
+      return
+    }
+    
+    // Then check AI risk score
     if (analysis?.riskScore && analysis.riskScore > 50) {
       toast.error('Cannot submit: High risk score detected. Please resolve validation issues.')
       return
     }
+    
+    // Check for validation errors from AI
+    const hasAIErrors = analysis?.validations?.some(v => v.status === 'error')
+    if (hasAIErrors) {
+      toast.error('Cannot submit: Please resolve AI validation errors.')
+      return
+    }
+    
     toast.success('Material submitted successfully! (This is a PoC demo)')
   }
 
@@ -129,7 +191,13 @@ export function MaterialEntryForm() {
                     </button>
                   )}
                 </div>
-                {getValidationMessage('materialCode') && (
+                {getFormErrorMessage('materialCode') && (
+                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
+                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <p>{getFormErrorMessage('materialCode')}</p>
+                  </div>
+                )}
+                {getValidationMessage('materialCode') && !getFormErrorMessage('materialCode') && (
                   <ValidationMessage validation={getValidationMessage('materialCode')!} />
                 )}
                 {showSuggestions.materialCode && analysis?.suggestions?.materialCode && (
@@ -152,7 +220,13 @@ export function MaterialEntryForm() {
                   className={getInputClassName('description')}
                   placeholder="Steel Rod 10mm"
                 />
-                {getValidationMessage('description') && (
+                {getFormErrorMessage('description') && (
+                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
+                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <p>{getFormErrorMessage('description')}</p>
+                  </div>
+                )}
+                {getValidationMessage('description') && !getFormErrorMessage('description') && (
                   <ValidationMessage validation={getValidationMessage('description')!} />
                 )}
               </div>
@@ -222,7 +296,7 @@ export function MaterialEntryForm() {
               {/* Plant Code */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Plant Code
+                  Plant Code *
                 </label>
                 <select
                   value={formData.plantCode || ''}
@@ -234,6 +308,12 @@ export function MaterialEntryForm() {
                   <option value="P002" className="text-gray-900">Plant 002 - Delhi</option>
                   <option value="P003" className="text-gray-900">Plant 003 - Bangalore</option>
                 </select>
+                {getFormErrorMessage('plantCode') && (
+                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
+                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <p>{getFormErrorMessage('plantCode')}</p>
+                  </div>
+                )}
               </div>
 
               {/* Unit of Measure */}
@@ -279,7 +359,13 @@ export function MaterialEntryForm() {
                   className={getInputClassName('vendorId')}
                   placeholder="200001 (Qualified vendors start with 200)"
                 />
-                {getValidationMessage('vendorId') && (
+                {getFormErrorMessage('vendorId') && (
+                  <div className="flex items-start gap-2 mt-1 text-sm text-red-600">
+                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <p>{getFormErrorMessage('vendorId')}</p>
+                  </div>
+                )}
+                {getValidationMessage('vendorId') && !getFormErrorMessage('vendorId') && (
                   <ValidationMessage validation={getValidationMessage('vendorId')!} />
                 )}
               </div>
@@ -318,12 +404,34 @@ export function MaterialEntryForm() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                className={`sap-button ${analysis?.riskScore && analysis.riskScore > 50 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={analysis?.riskScore && analysis.riskScore > 50}
+                className={`sap-button ${
+                  (Object.keys(formErrors).length > 0) || 
+                  (analysis?.riskScore && analysis.riskScore > 50) ||
+                  (analysis?.validations?.some(v => v.status === 'error'))
+                    ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={
+                  (Object.keys(formErrors).length > 0) || 
+                  (analysis?.riskScore && analysis.riskScore > 50) ||
+                  (analysis?.validations?.some(v => v.status === 'error'))
+                }
               >
                 Submit Material
               </button>
             </div>
+            
+            {/* Validation Summary */}
+            {Object.keys(formErrors).length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-red-800 mb-2">
+                  <XCircle className="w-5 h-5" />
+                  <h4 className="font-medium">Required Fields Missing</h4>
+                </div>
+                <p className="text-sm text-red-700">
+                  Please fill in all required fields marked with * to continue.
+                </p>
+              </div>
+            )}
           </form>
         </div>
       </div>
