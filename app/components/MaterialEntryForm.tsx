@@ -140,6 +140,43 @@ export function MaterialEntryForm() {
     }
   }
 
+  const clearForm = () => {
+    // Check if form has any data before showing confirmation
+    const hasData = formData.material || formData.materialDescription || formData.baseUnitOfMeasure || 
+                   formData.materialType || formData.industrySector || formData.materialGroup ||
+                   formData.oldMaterialNumber || formData.crossReferenceMaterial || 
+                   formData.crossPlantMaterialStatus || formData.division
+    
+    if (hasData && !confirm('Are you sure you want to clear all form data? This action cannot be undone.')) {
+      return
+    }
+    
+    setFormData({
+      material: '',
+      materialDescription: '',
+      baseUnitOfMeasure: '',
+      materialType: '',
+      industrySector: '',
+      materialGroup: '',
+      oldMaterialNumber: '',
+      crossReferenceMaterial: '',
+      crossPlantMaterialStatus: '',
+      commonMaterialFlag: false,
+      batchManagement: 'No',
+      serializationLevel: 'Serialization within the stock material number',
+      approvedBatchRecordRequired: 'No',
+      division: '',
+      catalogEnabled: false
+    })
+    setAnalysis(null)
+    setShowSuggestions({})
+    setFormErrors({})
+    
+    if (hasData) {
+      toast.success('Form cleared successfully! 🧹')
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -149,6 +186,14 @@ export function MaterialEntryForm() {
     
     // Handle submission
     console.log('Form submitted:', formData)
+    
+    // Show success notification
+    toast.success('Material master data submitted successfully! 🎉', {
+      duration: 4000,
+    })
+    
+    // Clear the form
+    clearForm()
   }
 
   return (
@@ -202,29 +247,8 @@ export function MaterialEntryForm() {
                     onClick={() => {
                       handleInputChange('material', item.code);
                       handleInputChange('materialDescription', item.desc);
-                      // Also set material type and industry sector for better demo experience
-                      if (item.type) {
-                        handleInputChange('materialType', item.type);
-                      }
-                      if (item.sector) {
-                        handleInputChange('industrySector', item.sector);
-                      }
-                      // Auto select material group based on material type
-                      if (item.type === 'ZDRL') {
-                        handleInputChange('materialGroup', '43KLM (DRILLING TOOLS)');
-                      } else if (item.type === 'ZCHM') {
-                        handleInputChange('materialGroup', '44ABC (CHEMICAL COMPOUNDS)');
-                      } else if (item.type === 'ZELE') {
-                        handleInputChange('materialGroup', '45XYZ (ELECTRICAL COMPONENTS)');
-                      }
-                      // Base unit of measure suggestions - use just the codes
-                      if (item.desc.includes('Rod') || item.desc.includes('Pipe')) {
-                        handleInputChange('baseUnitOfMeasure', 'M');
-                      } else if (item.desc.includes('Bit') || item.desc.includes('Cable')) {
-                        handleInputChange('baseUnitOfMeasure', 'EA');
-                      } else if (item.desc.includes('Cement') || item.desc.includes('Chemical')) {
-                        handleInputChange('baseUnitOfMeasure', 'KG');
-                      }
+                      // Note: All other fields are now independent - users can select them manually
+                      // This allows for complete flexibility in field selection
                     }}
                     className={`px-2 py-1 border rounded text-xs flex items-center gap-1 hover:bg-gray-50 
                       ${item.type === 'ZDRL' ? 'bg-blue-50 border-blue-200' : 
@@ -396,36 +420,33 @@ export function MaterialEntryForm() {
                 className="sap-input w-full"
               >
                 <option value="">Select</option>
-                {formData.materialType === 'ZDRL' && (
-                  <>
-                    <option value="43JDX (SELF INDEXING GUIDE)">43JDX (SELF INDEXING GUIDE)</option>
-                    <option value="43KLM (DRILLING TOOLS)">43KLM (DRILLING TOOLS)</option>
-                    <option value="43MNP (DRILL BITS)">43MNP (DRILL BITS)</option>
-                    <option value="43ABC (DRILL PIPES)">43ABC (DRILL PIPES)</option>
-                    <option value="43DEF (DRILL COLLARS)">43DEF (DRILL COLLARS)</option>
-                    <option value="43GHI (DRILLING ACCESSORIES)">43GHI (DRILLING ACCESSORIES)</option>
-                  </>
-                )}
-                {formData.materialType === 'ZCHM' && (
-                  <>
-                    <option value="44ABC (CHEMICAL COMPOUNDS)">44ABC (CHEMICAL COMPOUNDS)</option>
-                    <option value="44DEF (DRILLING FLUIDS)">44DEF (DRILLING FLUIDS)</option>
-                    <option value="44GHI (CEMENT ADDITIVES)">44GHI (CEMENT ADDITIVES)</option>
-                    <option value="44JKL (CORROSION INHIBITORS)">44JKL (CORROSION INHIBITORS)</option>
-                    <option value="44MNO (CLEANING CHEMICALS)">44MNO (CLEANING CHEMICALS)</option>
-                    <option value="44PQR (PRODUCTION CHEMICALS)">44PQR (PRODUCTION CHEMICALS)</option>
-                  </>
-                )}
-                {formData.materialType === 'ZELE' && (
-                  <>
-                    <option value="45XYZ (ELECTRICAL COMPONENTS)">45XYZ (ELECTRICAL COMPONENTS)</option>
-                    <option value="45UVW (CONTROL SYSTEMS)">45UVW (CONTROL SYSTEMS)</option>
-                    <option value="45RST (POWER SUPPLIES)">45RST (POWER SUPPLIES)</option>
-                    <option value="45ABC (CABLES & WIRING)">45ABC (CABLES & WIRING)</option>
-                    <option value="45DEF (INSTRUMENTATION)">45DEF (INSTRUMENTATION)</option>
-                    <option value="45GHI (ELECTRICAL PANELS)">45GHI (ELECTRICAL PANELS)</option>
-                  </>
-                )}
+                {/* ZDRL - Drilling Materials */}
+                <optgroup label="ZDRL - Drilling Materials">
+                  <option value="43JDX (SELF INDEXING GUIDE)">43JDX (SELF INDEXING GUIDE)</option>
+                  <option value="43KLM (DRILLING TOOLS)">43KLM (DRILLING TOOLS)</option>
+                  <option value="43MNP (DRILL BITS)">43MNP (DRILL BITS)</option>
+                  <option value="43ABC (DRILL PIPES)">43ABC (DRILL PIPES)</option>
+                  <option value="43DEF (DRILL COLLARS)">43DEF (DRILL COLLARS)</option>
+                  <option value="43GHI (DRILLING ACCESSORIES)">43GHI (DRILLING ACCESSORIES)</option>
+                </optgroup>
+                {/* ZCHM - Chemical Materials */}
+                <optgroup label="ZCHM - Chemical Materials">
+                  <option value="44ABC (CHEMICAL COMPOUNDS)">44ABC (CHEMICAL COMPOUNDS)</option>
+                  <option value="44DEF (DRILLING FLUIDS)">44DEF (DRILLING FLUIDS)</option>
+                  <option value="44GHI (CEMENT ADDITIVES)">44GHI (CEMENT ADDITIVES)</option>
+                  <option value="44JKL (CORROSION INHIBITORS)">44JKL (CORROSION INHIBITORS)</option>
+                  <option value="44MNO (CLEANING CHEMICALS)">44MNO (CLEANING CHEMICALS)</option>
+                  <option value="44PQR (PRODUCTION CHEMICALS)">44PQR (PRODUCTION CHEMICALS)</option>
+                </optgroup>
+                {/* ZELE - Electrical Materials */}
+                <optgroup label="ZELE - Electrical Materials">
+                  <option value="45XYZ (ELECTRICAL COMPONENTS)">45XYZ (ELECTRICAL COMPONENTS)</option>
+                  <option value="45UVW (CONTROL SYSTEMS)">45UVW (CONTROL SYSTEMS)</option>
+                  <option value="45RST (POWER SUPPLIES)">45RST (POWER SUPPLIES)</option>
+                  <option value="45ABC (CABLES & WIRING)">45ABC (CABLES & WIRING)</option>
+                  <option value="45DEF (INSTRUMENTATION)">45DEF (INSTRUMENTATION)</option>
+                  <option value="45GHI (ELECTRICAL PANELS)">45GHI (ELECTRICAL PANELS)</option>
+                </optgroup>
               </select>
               {analysis?.suggestions?.materialGroup && (
                 <button
@@ -585,8 +606,15 @@ export function MaterialEntryForm() {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end mt-6">
+        {/* Submit and Clear Buttons */}
+        <div className="flex justify-end gap-3 mt-6">
+          <button 
+            type="button"
+            onClick={clearForm}
+            className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            Clear Form
+          </button>
           <button 
             type="submit" 
             className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
